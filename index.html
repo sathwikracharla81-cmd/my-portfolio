@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sathwik Racharla — A Journey of Curiosity, Learning & Building</title>
+  <meta name="description" content="Personal portfolio of Sathwik Racharla — student at Newton School of Technology, backend developer, and hackathon winner from Vemulawada, Telangana." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════
+       OPENING SCREEN — THE ROYAL SCROLL
+  ══════════════════════════════════════════ -->
+  <section id="intro-screen" role="region" aria-label="Portfolio introduction screen">
+    <div class="intro-atmosphere"></div>
+    <div class="intro-dust-particles" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <div class="intro-layout">
+      <!-- Top title area -->
+      <div class="intro-top">
+        <p class="intro-eyebrow" aria-hidden="true">— A Royal Proclamation —</p>
+        <h1 class="intro-name">Sathwik Racharla</h1>
+        <p class="intro-subtitle">A Journey of Curiosity, Learning &amp; Building</p>
+      </div>
+
+      <!-- The parchment scroll image -->
+      <div class="scroll-container" id="scroll-container" aria-hidden="true">
+        <div class="scroll-glow"></div>
+        <img
+          src="assets/scroll.jpg"
+          alt="An antique royal parchment scroll with wax seal"
+          class="scroll-image"
+          id="scroll-image"
+          draggable="false"
+          onerror="this.style.display='none'; document.getElementById('scroll-fallback').style.display='flex';"
+        />
+        <!-- Fallback parchment when no image is supplied -->
+        <div class="scroll-fallback" id="scroll-fallback" aria-hidden="true">
+          <div class="fallback-parchment">
+            <div class="fallback-ornament top">⸻ ✦ ⸻</div>
+            <div class="fallback-seal">
+              <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="45" fill="#8b1a1a" stroke="#c9a227" stroke-width="3"/>
+                <circle cx="50" cy="50" r="35" fill="none" stroke="#c9a227" stroke-width="1.5"/>
+                <text x="50" y="47" text-anchor="middle" fill="#c9a227" font-size="8" font-family="Georgia">SATHWIK</text>
+                <text x="50" y="58" text-anchor="middle" fill="#c9a227" font-size="6" font-family="Georgia">RACHARLA</text>
+              </svg>
+            </div>
+            <div class="fallback-text">Herein lies the chronicle<br/>of a curious mind</div>
+            <div class="fallback-ornament bottom">⸻ ✦ ⸻</div>
+          </div>
+        </div>
+
+        <!-- Bird SVG — white dove, hidden initially, animates on click -->
+        <div class="bird-wrapper" id="bird-wrapper" aria-hidden="true">
+          <svg class="bird-svg" id="bird-svg" viewBox="0 0 160 95" xmlns="http://www.w3.org/2000/svg">
+            <!-- Soft drop shadow filter -->
+            <defs>
+              <filter id="bird-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.45"/>
+              </filter>
+              <radialGradient id="body-grad" cx="55%" cy="40%">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="100%" stop-color="#d8e8f8"/>
+              </radialGradient>
+              <radialGradient id="wing-grad" cx="40%" cy="30%">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="100%" stop-color="#c0d8f0"/>
+              </radialGradient>
+            </defs>
+            <g filter="url(#bird-shadow)">
+              <!-- Body -->
+              <ellipse cx="80" cy="58" rx="30" ry="14" fill="url(#body-grad)"/>
+              <!-- Tail feathers — spread fan -->
+              <path d="M50 60 Q36 72 22 66 Q34 62 50 56Z" fill="#e8f2fc" opacity="0.95"/>
+              <path d="M50 62 Q32 78 18 74 Q32 68 50 58Z" fill="#d0e4f4" opacity="0.85"/>
+              <path d="M50 58 Q34 65 24 60 Q36 58 50 54Z" fill="#f0f8ff" opacity="0.9"/>
+              <!-- Head -->
+              <ellipse cx="106" cy="48" rx="15" ry="12" fill="url(#body-grad)"/>
+              <!-- Neck connection -->
+              <ellipse cx="92" cy="52" rx="12" ry="9" fill="#ffffff"/>
+              <!-- Beak — amber/gold -->
+              <path d="M120 46 L133 43 L120 51Z" fill="#d4952a"/>
+              <path d="M120 46 L130 44 L120 49Z" fill="#f2b94a" opacity="0.8"/>
+              <!-- Eye -->
+              <circle cx="110" cy="44" r="3.5" fill="#1a1209"/>
+              <circle cx="111" cy="43" r="1.2" fill="#ffffff"/>
+              <!-- Cheek blush -->
+              <ellipse cx="113" cy="48" rx="4" ry="2.5" fill="#f0e0d0" opacity="0.45"/>
+              <!-- Primary wing (large, animates) -->
+              <path class="wing" d="M74 50 Q80 20 118 30 Q98 38 74 54Z" fill="url(#wing-grad)" opacity="0.95"/>
+              <!-- Secondary wing layer -->
+              <path d="M74 53 Q82 35 108 40 Q92 46 74 56Z" fill="#e0effa" opacity="0.75"/>
+              <!-- Wing feather tips -->
+              <path d="M90 24 Q102 22 115 28 Q104 28 90 32Z" fill="#c8dff0" opacity="0.6"/>
+              <!-- Legs -->
+              <line x1="84" y1="70" x2="79" y2="82" stroke="#d4952a" stroke-width="2.2" stroke-linecap="round"/>
+              <line x1="92" y1="70" x2="96" y2="82" stroke="#d4952a" stroke-width="2.2" stroke-linecap="round"/>
+              <!-- Talons -->
+              <path d="M74 82 Q79 87 84 82 Q79 80 74 82Z" fill="#d4952a"/>
+              <path d="M93 82 Q98 87 102 82 Q97 80 93 82Z" fill="#d4952a"/>
+              <!-- Breast highlight -->
+              <ellipse cx="85" cy="55" rx="12" ry="7" fill="#ffffff" opacity="0.35"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Bottom CTA area -->
+      <div class="intro-bottom">
+        <p class="intro-hint">✦ &nbsp; A story waiting to unfold &nbsp; ✦</p>
+        <button
+          class="open-story-btn"
+          id="open-story-btn"
+          type="button"
+          aria-label="Open the portfolio story"
+        >
+          <span class="btn-text">OPEN MY STORY</span>
+          <span class="btn-wax" aria-hidden="true">❧</span>
+        </button>
+        <p class="intro-scroll-hint" aria-hidden="true">Click the seal to begin</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════
+       MAIN PORTFOLIO
+  ══════════════════════════════════════════ -->
+  <main id="portfolio" aria-hidden="true">
+
+    <!-- ── NAVIGATION ── -->
+    <nav id="main-nav" role="navigation" aria-label="Main navigation">
+      <div class="nav-inner">
+        <a href="#hero" class="nav-logo" aria-label="Sathwik Racharla – Home">
+          <span class="logo-initial">S</span>
+          <span class="logo-name">Sathwik</span>
+        </a>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+        <ul class="nav-links" id="nav-links" role="list">
+          <li><a href="#about">About</a></li>
+          <li><a href="#education">Education</a></li>
+          <li><a href="#achievements">Achievements</a></li>
+          <li><a href="#project">Project</a></li>
+          <li><a href="#skills">Skills</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- ── HERO ── -->
+    <section id="hero" class="section hero-section" aria-label="Hero section">
+      <div class="hero-bg-texture" aria-hidden="true"></div>
+      <div class="container hero-inner">
+        <div class="hero-text" data-reveal>
+          <p class="hero-eyebrow">Welcome to my world</p>
+          <h2 class="hero-name">Sathwik<br/>Racharla</h2>
+          <p class="hero-tagline">Student at Newton School of Technology &nbsp;|&nbsp; Aspiring Developer</p>
+          <p class="hero-body">
+            From Vemulawada, Telangana, to exploring the world of technology — learning, building, and growing one project at a time.
+          </p>
+          <div class="hero-ctas">
+            <a href="#about" class="btn btn-primary">Explore My Journey</a>
+            <a href="#project" class="btn btn-outline">View My Projects</a>
+          </div>
+        </div>
+        <div class="hero-portrait" data-reveal data-reveal-delay="200">
+          <div class="portrait-frame">
+            <img
+              src="assets/sathwik.jpg"
+              alt="Portrait of Sathwik Racharla"
+              class="portrait-img"
+              onerror="this.closest('.portrait-frame').classList.add('portrait-placeholder')"
+            />
+            <div class="portrait-monogram" aria-hidden="true">SR</div>
+          </div>
+          <div class="portrait-glow" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="hero-scroll-indicator" aria-hidden="true">
+        <span>Scroll</span>
+        <div class="scroll-line"></div>
+      </div>
+    </section>
+
+    <!-- ── ABOUT ── -->
+    <section id="about" class="section about-section" aria-label="About me">
+      <div class="container">
+        <div class="section-header" data-reveal>
+          <span class="section-label">Who I Am</span>
+          <h2 class="section-title">The Story Behind<br/>the Journey</h2>
+          <div class="section-divider" aria-hidden="true"><span>✦</span></div>
+        </div>
+        <div class="about-content" data-reveal data-reveal-delay="100">
+          <div class="about-text">
+            <p class="about-lead">
+              My name is Sathwik Racharla, and I come from Vemulawada, a small town in Telangana, India. My story is not extraordinary in the conventional sense — it is simply one of consistent effort and genuine curiosity.
+            </p>
+            <p>
+              I studied at a government school right through Class 10, graduating with a 9.7 CGPA. That environment taught me resourcefulness and the value of working hard without many shortcuts. In Class 12, I secured 978 out of 1000 marks and cleared the JEE with a percentile of 85.978 — milestones that opened the door to my next chapter.
+            </p>
+            <p>
+              Today, I am studying at Newton School of Technology, where I am discovering what it truly means to build things with code. I am drawn to backend systems, logic, problem-solving, and the architecture of how applications work behind the scenes.
+            </p>
+            <p>
+              One of my most meaningful experiences so far has been competing at a Hacktoberfest hackathon with my team, where we built <em>AMENDMENT</em> — a board game that rewrites its own rules — and won first prize of ₹12,000. That project pushed me to think beyond tutorials and apply what I had learned in a creative, high-pressure setting.
+            </p>
+            <p>
+              I am still at the beginning of this journey. But I believe beginnings are the most exciting part.
+            </p>
+          </div>
+          <div class="about-stats">
+            <div class="stat-card">
+              <span class="stat-num">9.7</span>
+              <span class="stat-label">Class 10 CGPA</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-num">978</span>
+              <span class="stat-label">Class 12 Score /1000</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-num">85.97</span>
+              <span class="stat-label">JEE Percentile</span>
+            </div>
+            <div class="stat-card accent">
+              <span class="stat-num">1<sup>st</sup></span>
+              <span class="stat-label">Hackathon Prize</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── EDUCATION ── -->
+    <section id="education" class="section education-section" aria-label="Education timeline">
+      <div class="container">
+        <div class="section-header" data-reveal>
+          <span class="section-label">Academic Path</span>
+          <h2 class="section-title">Education</h2>
+          <div class="section-divider" aria-hidden="true"><span>✦</span></div>
+        </div>
+
+        <!-- Current Education Banner -->
+        <div class="current-edu-banner" data-reveal data-reveal-delay="50">
+          <div class="current-edu-icon" aria-hidden="true">🎓</div>
+          <div class="current-edu-text">
+            <span class="current-badge">Currently Enrolled</span>
+            <h3>Newton School of Technology</h3>
+            <p>Actively studying, learning, and building — exploring programming, technology, and applied computer science.</p>
+          </div>
+        </div>
+
+        <div class="timeline" role="list">
+          <div class="timeline-item" data-reveal data-reveal-delay="100" role="listitem">
+            <div class="timeline-marker" aria-hidden="true">
+              <span class="marker-icon">✦</span>
+            </div>
+            <div class="timeline-content">
+              <span class="timeline-period">Present</span>
+              <h3 class="timeline-title">Newton School of Technology</h3>
+              <p class="timeline-desc">Currently pursuing my undergraduate journey. Immersed in programming, system design, and collaborative project work.</p>
+              <span class="timeline-tag active-tag">Currently Studying</span>
+            </div>
+          </div>
+
+          <div class="timeline-item" data-reveal data-reveal-delay="200" role="listitem">
+            <div class="timeline-marker" aria-hidden="true">
+              <span class="marker-icon">◆</span>
+            </div>
+            <div class="timeline-content">
+              <span class="timeline-period">Class 12</span>
+              <h3 class="timeline-title">Higher Secondary Education</h3>
+              <p class="timeline-desc">Completed Class 12 with a score of <strong>978 out of 1000</strong>, demonstrating consistent academic dedication across core science subjects.</p>
+              <div class="timeline-score">
+                <span class="score-value">978 / 1000</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-item" data-reveal data-reveal-delay="300" role="listitem">
+            <div class="timeline-marker" aria-hidden="true">
+              <span class="marker-icon">◆</span>
+            </div>
+            <div class="timeline-content">
+              <span class="timeline-period">JEE</span>
+              <h3 class="timeline-title">Joint Entrance Examination</h3>
+              <p class="timeline-desc">Cleared the JEE with a percentile of <strong>85.978</strong>, a competitive national-level engineering entrance examination.</p>
+              <div class="timeline-score">
+                <span class="score-value">85.978 Percentile</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="timeline-item" data-reveal data-reveal-delay="400" role="listitem">
+            <div class="timeline-marker" aria-hidden="true">
+              <span class="marker-icon">◇</span>
+            </div>
+            <div class="timeline-content">
+              <span class="timeline-period">Class 10</span>
+              <h3 class="timeline-title">Government School</h3>
+              <p class="timeline-desc">Completed Class 10 from a government school with a CGPA of <strong>9.7</strong>. A foundation built on genuine effort and discipline.</p>
+              <div class="timeline-score">
+                <span class="score-value">9.7 CGPA</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ACHIEVEMENTS ── -->
+    <section id="achievements" class="section achievements-section" aria-label="Achievements">
+      <div class="container">
+        <div class="section-header" data-reveal>
+          <span class="section-label">Recognition</span>
+          <h2 class="section-title">Achievements</h2>
+          <div class="section-divider" aria-hidden="true"><span>✦</span></div>
+        </div>
+
+        <div class="achievement-showcase" data-reveal data-reveal-delay="100">
+          <div class="achievement-trophy" aria-hidden="true">
+            <div class="trophy-icon">🏆</div>
+            <div class="trophy-rays">
+              <span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+
+          <div class="achievement-content">
+            <div class="achievement-badge">
+              <span class="badge-label">Hacktoberfest Hackathon</span>
+              <span class="badge-rank">First Prize</span>
+            </div>
+            <div class="gemma-badge">Gemma &amp; Track Winner</div>
+            <h3 class="achievement-title">AMENDMENT</h3>
+            <p class="achievement-subtitle">The Board Game That Rewrites Its Own Rules</p>
+            <p class="achievement-desc">
+              Competed in a Hacktoberfest hackathon and won first place — awarded the <strong>Gemma &amp; Track Winner</strong> title — with <em>AMENDMENT</em>: an innovative board game where the rules themselves can evolve through structured in-game amendments. A local AI-powered Court interprets proposed rule changes, while a deterministic backend game engine enforces approved amendments.
+            </p>
+            <div class="achievement-meta">
+              <div class="meta-item">
+                <span class="meta-icon">💰</span>
+                <div>
+                  <span class="meta-label">Prize Money</span>
+                  <span class="meta-value">₹12,000</span>
+                </div>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">⚙️</span>
+                <div>
+                  <span class="meta-label">My Role</span>
+                  <span class="meta-value">Backend &amp; Game Engine</span>
+                </div>
+              </div>
+              <div class="meta-item">
+                <span class="meta-icon">🏅</span>
+                <div>
+                  <span class="meta-label">Standing</span>
+                  <span class="meta-value">1st Place — Gemma Track</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Team winner photo -->
+            <div class="achievement-photo-wrap">
+              <img
+                src="assets/hackathon-winner.jpg"
+                alt="Sathwik Racharla and teammates holding Hacktoberfest Gemma Track Winner certificates in front of the AMENDMENT game screen"
+                class="achievement-photo"
+                loading="lazy"
+              />
+              <div class="achievement-photo-caption">
+                <span class="caption-icon">🏆</span>
+                Hacktoberfest — Gemma &amp; Track Winner · Team AMENDMENT
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FEATURED PROJECT ── -->
+    <section id="project" class="section project-section" aria-label="Featured project">
+      <div class="container">
+        <div class="section-header" data-reveal>
+          <span class="section-label">Featured Work</span>
+          <h2 class="section-title">AMENDMENT</h2>
+          <div class="section-divider" aria-hidden="true"><span>✦</span></div>
+        </div>
+
+        <div class="project-card" data-reveal data-reveal-delay="100">
+          <div class="project-visual">
+            <div class="project-screenshot-frame">
+              <img
+                src="assets/amendment-screenshot.jpg"
+                alt="AMENDMENT board game project screenshot"
+                class="project-screenshot"
+                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+              />
+              <div class="screenshot-placeholder" style="display:none;">
+                <span>📋 Project Screenshot</span>
+                <small>Place <code>assets/amendment-screenshot.jpg</code> here</small>
+              </div>
+            </div>
+            <div class="project-tags">
+              <span class="tag">Backend</span>
+              <span class="tag">Game Engine</span>
+              <span class="tag">Rule Logic</span>
+              <span class="tag">Hackathon</span>
+            </div>
+          </div>
+
+          <div class="project-details">
+            <h3 class="project-name">AMENDMENT</h3>
+            <p class="project-tagline">The Board Game That Rewrites Its Own Rules</p>
+            <p class="project-desc">
+              AMENDMENT is a board game where the rules can evolve through controlled amendments. A local AI-powered Court helps interpret and validate proposed rule changes, while a deterministic backend game engine executes approved rules — ensuring fairness, consistency, and an ever-changing gameplay experience.
+            </p>
+
+            <div class="contribution-block">
+              <h4 class="contribution-heading">My Contribution</h4>
+              <ul class="contribution-list">
+                <li>
+                  <span class="contrib-icon" aria-hidden="true">⚙️</span>
+                  <span>Designed and built the backend architecture for the game</span>
+                </li>
+                <li>
+                  <span class="contrib-icon" aria-hidden="true">🎲</span>
+                  <span>Engineered the deterministic game engine that processes and enforces rules</span>
+                </li>
+                <li>
+                  <span class="contrib-icon" aria-hidden="true">🔄</span>
+                  <span>Implemented game-state management and turn-flow logic</span>
+                </li>
+                <li>
+                  <span class="contrib-icon" aria-hidden="true">🔗</span>
+                  <span>Integrated rule validation and execution pipeline with the AI Court layer</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="project-links">
+              <a href="#" class="btn btn-primary" aria-label="View AMENDMENT on GitHub (update link)">
+                GitHub Repository
+              </a>
+              <a href="#" class="btn btn-outline" aria-label="View live demo of AMENDMENT (update link)">
+                Live Demo
+              </a>
+            </div>
+            <p class="link-note">
+              <em>Update the links above with real GitHub and demo URLs when available.</em>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── SKILLS ── -->
+    <section id="skills" class="section skills-section" aria-label="Skills">
+      <div class="container">
+        <div class="section-header" data-reveal>
+          <span class="section-label">Toolkit</span>
+          <h2 class="section-title">Skills &amp; Tools</h2>
+          <div class="section-divider" aria-hidden="true"><span>✦</span></div>
+          <p class="section-subtitle">Technologies I have worked with or am currently learning.</p>
+        </div>
+
+        <div class="skills-grid" data-reveal data-reveal-delay="100">
+          <!-- Edit proficiency labels freely: Learning / Familiar / Comfortable / Proficient -->
+          <div class="skill-card">
+            <div class="skill-icon" aria-hidden="true">🐍</div>
+            <h4 class="skill-name">Python</h4>
+            <span class="skill-level">Familiar</span>
+          </div>
+          <div class="skill-card">
+            <div class="skill-icon" aria-hidden="true">🔀</div>
+            <h4 class="skill-name">Git &amp; GitHub</h4>
+            <span class="skill-level">Familiar</span>
+          </div>
+          <div class="skill-card">
+            <div class="skill-icon" aria-hidden="true">⚙️</div>
+            <h4 class="skill-name">Backend Development</h4>
+            <span class="skill-level">Learning</span>
+          </div>
+          <div class="skill-card">
+            <div class="skill-icon" aria-hidden="true">🎲</div>
+            <h4 class="skill-name">Game Engine Logic</h4>
+            <span class="skill-level">Familiar</span>
+          </div>
+          <div class="skill-card">
+            <div class="skill-icon" aria-hidden="true">🧠</div>
+            <h4 class="skill-name">Problem Solving</h4>
+            <span class="skill-level">Growing</span>
+          </div>
+          <div class="skill-card add-skill" aria-label="Placeholder — add more skills here">
+            <div class="skill-icon" aria-hidden="true">✦</div>
+            <h4 class="skill-name">Your Skill Here</h4>
+            <span class="skill-level">Edit me</span>
+          </div>
+        </div>
+        <p class="skills-note">
+          <em>Proficiency labels are honest and editable. No fake progress bars.</em>
+        </p>
+      </div>
+    </section>
+
+    <!-- ── CONTACT ── -->
+    <section id="contact" class="section contact-section" aria-label="Contact">
+      <div class="container">
+        <div class="section-header" data-reveal>
+          <span class="section-label">Get in Touch</span>
+          <h2 class="section-title">Let's Connect</h2>
+          <div class="section-divider" aria-hidden="true"><span>✦</span></div>
+        </div>
+
+        <div class="contact-inner" data-reveal data-reveal-delay="100">
+          <blockquote class="contact-quote">
+            "Every journey begins with curiosity.<br/>This is only the beginning."
+          </blockquote>
+
+          <div class="contact-links">
+            <a href="mailto:your@email.com" class="contact-card" aria-label="Send email to Sathwik">
+              <span class="contact-card-icon" aria-hidden="true">✉</span>
+              <div class="contact-card-text">
+                <span class="contact-card-label">Email</span>
+                <span class="contact-card-value">your@email.com</span>
+              </div>
+            </a>
+            <a href="https://github.com/your-github" target="_blank" rel="noopener noreferrer" class="contact-card" aria-label="Visit Sathwik's GitHub profile">
+              <span class="contact-card-icon" aria-hidden="true">⌥</span>
+              <div class="contact-card-text">
+                <span class="contact-card-label">GitHub</span>
+                <span class="contact-card-value">github.com/your-github</span>
+              </div>
+            </a>
+            <a href="https://linkedin.com/in/your-linkedin" target="_blank" rel="noopener noreferrer" class="contact-card" aria-label="Visit Sathwik's LinkedIn profile">
+              <span class="contact-card-icon" aria-hidden="true">🔗</span>
+              <div class="contact-card-text">
+                <span class="contact-card-label">LinkedIn</span>
+                <span class="contact-card-value">linkedin.com/in/your-linkedin</span>
+              </div>
+            </a>
+          </div>
+          <p class="contact-note">
+            <em>Update the placeholders above with your real email, GitHub, and LinkedIn details.</em>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FOOTER ── -->
+    <footer class="site-footer" role="contentinfo">
+      <div class="footer-inner">
+        <div class="footer-logo" aria-hidden="true">SR</div>
+        <p class="footer-name">Sathwik Racharla</p>
+        <p class="footer-tagline">From Vemulawada, Telangana &nbsp;✦&nbsp; Newton School of Technology</p>
+        <div class="footer-divider" aria-hidden="true">⸻ ✦ ⸻</div>
+        <p class="footer-copy">&copy; <span id="footer-year"></span> Sathwik Racharla. All rights reserved.</p>
+      </div>
+    </footer>
+
+  </main><!-- /#portfolio -->
+
+  <script src="script.js"></script>
+</body>
+</html>
+
