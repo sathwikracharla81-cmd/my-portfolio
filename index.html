@@ -13,24 +13,46 @@
 <body>
 
   <!-- ========================================================================
-       1. INITIAL LOADING SCREEN
+       1. INITIAL ENTRANCE & SHOWCASE OVERLAY
        ======================================================================== -->
-  <div id="loader-screen" role="dialog" aria-label="Loading 3D Portfolio">
-    <div class="loader-content">
-      <div class="loader-car-icon" aria-hidden="true">
-        <svg class="car-svg-anim" viewBox="0 0 24 24">
-          <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
-        </svg>
+  <div id="loader-screen" role="dialog" aria-label="Welcome to Sathwik's 3D Portfolio">
+    <div class="loader-content entrance-card">
+      <div class="entrance-pill">
+        <span class="pulsing-dot"></span>
+        <span>REAL-TIME 3D SHOWCASE</span>
       </div>
       <h1 class="loader-title">SATHWIK RACHARLA</h1>
-      <p class="loader-subtitle">Interactive 3D Portfolio &amp; World</p>
+      <p class="loader-subtitle">Newton School of Technology · Backend Architect · Hackathon Winner</p>
       
-      <div class="progress-track" aria-hidden="true">
-        <div class="progress-fill" id="loader-progress-bar"></div>
+      <div class="entrance-features">
+        <div class="feature-chip">
+          <span class="chip-emoji">🏎️</span>
+          <span>Physics 3D Sports Car</span>
+        </div>
+        <div class="feature-chip">
+          <span class="chip-emoji">🏆</span>
+          <span>AMENDMENT Engine</span>
+        </div>
+        <div class="feature-chip">
+          <span class="chip-emoji">🔀</span>
+          <span>10 S&amp;AI Gitignore PRs</span>
+        </div>
       </div>
-      <div class="loader-status" id="loader-status-text">Booting WebGL World Engine...</div>
+
+      <!-- Hidden legacy progress trackers for script resilience -->
+      <div class="progress-track" aria-hidden="true" style="display: none;">
+        <div class="progress-fill" id="loader-progress-bar" style="width: 100%;"></div>
+      </div>
+      <div class="loader-status" id="loader-status-text" style="display: none;">Ready</div>
       
-      <button class="btn-start-exp" id="btn-enter-world">ENTER 3D WORLD ➔</button>
+      <button class="btn-start-exp" id="btn-enter-world">
+        <span>ENTER 3D PORTFOLIO</span>
+        <span class="btn-arrow">➔</span>
+      </button>
+
+      <div class="entrance-quick-hint">
+        <span>Press <strong>Enter</strong> or click to explore · Drive freely with <strong>W A S D</strong></span>
+      </div>
     </div>
   </div>
 

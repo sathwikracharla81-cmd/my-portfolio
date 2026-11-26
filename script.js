@@ -356,6 +356,8 @@
     activeTab: "amendment",
     activeDestinationNear: null,
     isWarping: false,
+    isAutoDriving: false,
+    hasEntered: false,
     controlsHelpOpen: false,
     readerMode: false
   };
@@ -374,35 +376,38 @@
   let scene, camera, renderer;
   let sunLight, hemiLight;
   let carGroup, carBody, wheels = [], headlights = [];
+  let taillightMat, drlLightMat, spotLights = [];
   let animatedObjects = [];
   let minimapCanvas, minimapCtx;
 
   // Car Physics State
   const car = {
-    pos: new THREE.Vector3(0, 0.4, 0),
-    rot: 0,
+    pos: new THREE.Vector3(0, 0, 0),
+    rot: 0, // Facing North toward achievements plaza
     speed: 0,
     maxSpeed: 28,
     maxReverse: -10,
     accel: 24,
-    decel: 14,
-    brake: 36,
+    decel: 18,
+    brake: 44,
     steerAngle: 0,
-    maxSteer: 0.65,
-    steerSpeed: 3.5,
+    maxSteer: 0.62,
+    steerSpeed: 4.0,
     drift: 0,
     pitch: 0,
-    roll: 0
+    roll: 0,
+    isBraking: false
   };
 
-  // Camera Orbit State
+  // Camera State
   const camControl = {
-    distance: 14,
-    height: 7,
-    pitch: 0.32,
+    distance: 13.5,
+    height: 6.8,
+    pitch: 0.28,
     yaw: 0,
     isDragging: false,
-    prevPointer: { x: 0, y: 0 }
+    prevPointer: { x: 0, y: 0 },
+    mode: 'entrance' // 'entrance' | 'transition' | 'follow' | 'cinematic'
   };
 
   /* ==========================================================================
@@ -422,7 +427,9 @@
     scene.fog = new THREE.FogExp2(0xa0d8ef, 0.012);
 
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.2, 500);
-    camera.position.set(0, 10, 16);
+    // Initial cinematic hero framing for entrance screen
+    camera.position.set(4.8, 2.2, 5.8);
+    camera.lookAt(0, 0.7, 0);
 
     try {
       renderer = new THREE.WebGLRenderer({
@@ -556,28 +563,65 @@
       flatShading: true
     });
 
-    // Central circular plaza
-    const plazaGeo = new THREE.CylinderGeometry(10, 10, 0.1, 32);
+    // Central circular plaza road
+    const plazaGeo = new THREE.CylinderGeometry(11, 11, 0.08, 32);
     const plaza = new THREE.Mesh(plazaGeo, roadMat);
-    plaza.position.y = 0.05;
+    plaza.position.y = 0.04;
     plaza.receiveShadow = true;
     scene.add(plaza);
 
-    // Roundabout center garden
-    const gardenGeo = new THREE.CylinderGeometry(4, 4, 0.3, 16);
-    const gardenMat = new THREE.MeshStandardMaterial({ color: 0x48943f, flatShading: true });
-    const garden = new THREE.Mesh(gardenGeo, gardenMat);
-    garden.position.y = 0.15;
-    garden.receiveShadow = true;
-    scene.add(garden);
+    // Dedicated Vehicle Launch Pad (Flush with road, zero clipping with car)
+    const launchPadGeo = new THREE.CylinderGeometry(4.2, 4.4, 0.04, 32);
+    const launchPadMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      metalness: 0.8,
+      roughness: 0.25
+    });
+    const launchPad = new THREE.Mesh(launchPadGeo, launchPadMat);
+    launchPad.position.y = 0.055;
+    launchPad.receiveShadow = true;
+    scene.add(launchPad);
 
-    // Fountain in garden
-    const fountainBase = new THREE.Mesh(
-      new THREE.CylinderGeometry(2, 2.2, 0.8, 12),
-      new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.4 })
-    );
-    fountainBase.position.y = 0.55;
-    scene.add(fountainBase);
+    // Glowing Cyan Perimeter Ring
+    const padRingGeo = new THREE.TorusGeometry(4.1, 0.04, 8, 32);
+    const padRingMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0x0ea5e9,
+      emissiveIntensity: 2.2
+    });
+    const padRing = new THREE.Mesh(padRingGeo, padRingMat);
+    padRing.rotation.x = Math.PI / 2;
+    padRing.position.y = 0.075;
+    scene.add(padRing);
+
+    // Inner Geometric Compass Markings
+    const innerRingGeo = new THREE.TorusGeometry(2.2, 0.025, 8, 32);
+    const innerRing = new THREE.Mesh(innerRingGeo, padRingMat);
+    innerRing.rotation.x = Math.PI / 2;
+    innerRing.position.y = 0.075;
+    scene.add(innerRing);
+
+    // Dual Minimalist Light Pylons flanking the plaza perimeter (at x = ±8.5, safely clear of car)
+    [-8.5, 8.5].forEach(px => {
+      const pylon = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.24, 2.6, 8),
+        new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.7, roughness: 0.3 })
+      );
+      pylon.position.set(px, 1.3, 0);
+      pylon.castShadow = true;
+      scene.add(pylon);
+
+      const pylonGlow = new THREE.Mesh(
+        new THREE.SphereGeometry(0.22, 12, 12),
+        new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+      );
+      pylonGlow.position.set(px, 2.65, 0);
+      scene.add(pylonGlow);
+
+      const pylonLight = new THREE.PointLight(0x38bdf8, 0.8, 14);
+      pylonLight.position.set(px, 2.65, 0);
+      scene.add(pylonLight);
+    });
 
     // Four primary connecting roads radiating to the 6 destinations
     const roadSpecs = [
@@ -1238,103 +1282,415 @@
      7. THE CUSTOM 3D VEHICLE
      ========================================================================== */
 
+  /* ==========================================================================
+     7. THE CUSTOM 3D VEHICLE & WHEELS
+     ========================================================================== */
+
   function buildVehicle() {
     carGroup = new THREE.Group();
 
-    // 1. Aerodynamic Cyber Coupe Chassis
-    const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0x38bdf8,
-      metalness: 0.6,
-      roughness: 0.25,
-      flatShading: true
+    // High-End Automotive PBR Materials
+    const bodyPaintMat = new THREE.MeshStandardMaterial({
+      color: 0x0ea5e9,       // Electric Cyber Sky Metallic
+      metalness: 0.85,
+      roughness: 0.18,
+      flatShading: false
     });
-    carBody = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.55, 3.2), bodyMat);
-    carBody.position.y = 0.55;
-    carBody.castShadow = true;
+
+    const bodyAccentMat = new THREE.MeshStandardMaterial({
+      color: 0x0284c7,       // Deep Ocean Blue Contrast
+      metalness: 0.8,
+      roughness: 0.22,
+      flatShading: false
+    });
+
+    const carbonMat = new THREE.MeshStandardMaterial({
+      color: 0x111827,       // Matte Carbon Composite
+      metalness: 0.35,
+      roughness: 0.58,
+      flatShading: false
+    });
+
+    const glassMat = new THREE.MeshStandardMaterial({
+      color: 0x071126,       // Deep Automotive Tint Glass
+      metalness: 0.95,
+      roughness: 0.04,
+      transparent: true,
+      opacity: 0.82
+    });
+
+    const chromeMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,       // Polished Mirror Chrome
+      metalness: 1.0,
+      roughness: 0.03
+    });
+
+    const interiorMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,       // Dark Alcantara Interior Cockpit
+      roughness: 0.85
+    });
+
+    const crystalLensMat = new THREE.MeshStandardMaterial({
+      color: 0xf8fafc,       // Diamond Cut Headlight Housing
+      metalness: 0.9,
+      roughness: 0.04,
+      transparent: true,
+      opacity: 0.72
+    });
+
+    drlLightMat = new THREE.MeshStandardMaterial({
+      color: 0xe0f2fe,
+      emissive: 0x38bdf8,    // High-Intensity Cyan DRL Glow
+      emissiveIntensity: 2.2
+    });
+
+    taillightMat = new THREE.MeshStandardMaterial({
+      color: 0xdc2626,
+      emissive: 0xef4444,    // Ruby Red LED Light Bar
+      emissiveIntensity: 1.8
+    });
+
+    const tireRubberMat = new THREE.MeshStandardMaterial({
+      color: 0x151619,       // High-Grip Matte Automotive Rubber
+      roughness: 0.9,
+      metalness: 0.04
+    });
+
+    const rimAlloyMat = new THREE.MeshStandardMaterial({
+      color: 0xf1f5f9,       // Forged Machined Aluminum Alloy
+      metalness: 0.94,
+      roughness: 0.14
+    });
+
+    const brakeRotorMat = new THREE.MeshStandardMaterial({
+      color: 0x94a3b8,       // Cross-Drilled Ventilated Rotor
+      metalness: 0.92,
+      roughness: 0.28
+    });
+
+    const brakeCaliperMat = new THREE.MeshStandardMaterial({
+      color: 0x06b6d4,       // Cyan High-Performance Calipers
+      metalness: 0.65,
+      roughness: 0.25
+    });
+
+    // 0. Soft Ambient Occlusion Ground Contact Shadow
+    const shadowCanvas = document.createElement('canvas');
+    shadowCanvas.width = 128;
+    shadowCanvas.height = 256;
+    const sCtx = shadowCanvas.getContext('2d');
+    const grad = sCtx.createRadialGradient(64, 128, 12, 64, 128, 62);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0.78)');
+    grad.addColorStop(0.5, 'rgba(0, 0, 0, 0.42)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    sCtx.fillStyle = grad;
+    sCtx.fillRect(0, 0, 128, 256);
+    const shadowTex = new THREE.CanvasTexture(shadowCanvas);
+
+    const contactShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.7, 4.6),
+      new THREE.MeshBasicMaterial({
+        map: shadowTex,
+        transparent: true,
+        depthWrite: false,
+        opacity: 0.85
+      })
+    );
+    contactShadow.rotation.x = -Math.PI / 2;
+    contactShadow.position.y = 0.015; // Flush with road
+    carGroup.add(contactShadow);
+
+    // Main Body Suspension Carrier (Pitches on accel/brake, rolls on steer)
+    carBody = new THREE.Group();
     carGroup.add(carBody);
 
-    // 2. Cabin & Windshield
-    const cabinMat = new THREE.MeshStandardMaterial({
-      color: 0x0f172a,
-      metalness: 0.9,
-      roughness: 0.1,
-      flatShading: true
+    // 1. Aerodynamic Carbon Underbody Floorpan & Splitter
+    const underFloor = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.08, 3.9), carbonMat);
+    underFloor.position.set(0, 0.20, 0.0);
+    underFloor.castShadow = true;
+    carBody.add(underFloor);
+
+    // Front Lip Splitter with Aero Endplates
+    const frontSplitter = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.04, 0.65), carbonMat);
+    frontSplitter.position.set(0, 0.16, -1.95);
+    carBody.add(frontSplitter);
+
+    [-0.94, 0.94].forEach(x => {
+      const splitterWinglet = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.14, 0.28), carbonMat);
+      splitterWinglet.position.set(x, 0.22, -2.12);
+      carBody.add(splitterWinglet);
     });
-    const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.5, 1.6), cabinMat);
-    cabin.position.set(0, 0.95, -0.2);
-    cabin.castShadow = true;
-    carGroup.add(cabin);
 
-    // 3. Rear Aerodynamic Spoiler
-    const spoilerMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, flatShading: true });
-    const wing = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.08, 0.4), spoilerMat);
-    wing.position.set(0, 1.15, 1.3);
-    carGroup.add(wing);
+    // Side Rocker Skirts
+    [-0.92, 0.92].forEach(x => {
+      const sideSkirt = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.06, 2.2), carbonMat);
+      sideSkirt.position.set(x, 0.19, 0.0);
+      carBody.add(sideSkirt);
+    });
 
-    // 4. Wheels (4 Independent Spinning Wheels with Steering)
-    const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.8 });
-    const rimMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.8, roughness: 0.2 });
+    // Rear Multi-Fin Diffuser
+    const rearDiffuser = new THREE.Mesh(new THREE.BoxGeometry(1.76, 0.16, 0.55), carbonMat);
+    rearDiffuser.position.set(0, 0.22, 1.95);
+    rearDiffuser.rotation.x = -0.08;
+    carBody.add(rearDiffuser);
 
+    [-0.55, -0.2, 0.2, 0.55].forEach(x => {
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.14, 0.48), carbonMat);
+      fin.position.set(x, 0.20, 2.0);
+      carBody.add(fin);
+    });
+
+    // 2. Sculpted Lower Fuselage Chassis
+    const lowerBody = new THREE.Mesh(new THREE.BoxGeometry(1.76, 0.38, 3.8), bodyPaintMat);
+    lowerBody.position.set(0, 0.42, 0.0);
+    lowerBody.castShadow = true;
+    lowerBody.receiveShadow = true;
+    carBody.add(lowerBody);
+
+    // Sculpted Waistline & Side Air Intakes (feeds rear brakes)
+    [-0.89, 0.89].forEach(x => {
+      const doorIndent = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.24, 1.4), bodyAccentMat);
+      doorIndent.position.set(x, 0.48, 0.05);
+      carBody.add(doorIndent);
+
+      const airScoop = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.22, 0.24), carbonMat);
+      airScoop.position.set(x, 0.48, 0.65);
+      carBody.add(airScoop);
+    });
+
+    // Flared Front & Rear Wheel Arches (Fender Flares)
+    [-0.92, 0.92].forEach(x => {
+      const frontArch = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.30, 0.98), bodyPaintMat);
+      frontArch.position.set(x, 0.50, -1.22);
+      frontArch.castShadow = true;
+      carBody.add(frontArch);
+
+      const rearArch = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.32, 1.05), bodyPaintMat);
+      rearArch.position.set(x, 0.52, 1.22);
+      rearArch.castShadow = true;
+      carBody.add(rearArch);
+    });
+
+    // 3. Aerodynamic Sloping Hood & Front Bumper Nose
+    const hood = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.16, 1.35), bodyPaintMat);
+    hood.position.set(0, 0.58, -1.15);
+    hood.rotation.x = 0.08;
+    hood.castShadow = true;
+    carBody.add(hood);
+
+    // Hood Heat Extractor Vents
+    [-0.34, 0.34].forEach(x => {
+      const vent = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.02, 0.34), carbonMat);
+      vent.position.set(x, 0.68, -1.02);
+      vent.rotation.x = 0.08;
+      carBody.add(vent);
+    });
+
+    // Front Bumper Fascia & Grille
+    const frontBumper = new THREE.Mesh(new THREE.BoxGeometry(1.74, 0.32, 0.42), bodyPaintMat);
+    frontBumper.position.set(0, 0.36, -1.92);
+    frontBumper.castShadow = true;
+    carBody.add(frontBumper);
+
+    const frontGrille = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.16, 0.06), carbonMat);
+    frontGrille.position.set(0, 0.29, -2.13);
+    carBody.add(frontGrille);
+
+    // 4. Cockpit / Greenhouse Canopy
+    const greenhouse = new THREE.Mesh(new THREE.BoxGeometry(1.36, 0.44, 1.85), glassMat);
+    greenhouse.position.set(0, 0.88, -0.06);
+    greenhouse.castShadow = true;
+    carBody.add(greenhouse);
+
+    // Raked Front Windshield
+    const windshield = new THREE.Mesh(new THREE.BoxGeometry(1.32, 0.46, 0.06), glassMat);
+    windshield.position.set(0, 0.86, -0.82);
+    windshield.rotation.x = 0.55;
+    carBody.add(windshield);
+
+    // Fastback Sloping Rear Window
+    const rearGlass = new THREE.Mesh(new THREE.BoxGeometry(1.26, 0.42, 0.06), glassMat);
+    rearGlass.position.set(0, 0.84, 0.72);
+    rearGlass.rotation.x = -0.45;
+    carBody.add(rearGlass);
+
+    // Double-Bubble Aerodynamic Roof Panel
+    const roof = new THREE.Mesh(new THREE.BoxGeometry(1.28, 0.05, 1.35), bodyPaintMat);
+    roof.position.set(0, 1.12, -0.04);
+    roof.castShadow = true;
+    carBody.add(roof);
+
+    // Interior Details (Racing Seats & Steering Wheel visible through glass)
+    const interiorFloor = new THREE.Mesh(new THREE.BoxGeometry(1.24, 0.04, 1.6), interiorMat);
+    interiorFloor.position.set(0, 0.66, -0.08);
+    carBody.add(interiorFloor);
+
+    [-0.30, 0.30].forEach(x => {
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.36, 0.42), interiorMat);
+      seat.position.set(x, 0.84, -0.05);
+      carBody.add(seat);
+
+      const headrest = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.14, 0.14), interiorMat);
+      headrest.position.set(x, 1.05, 0.08);
+      carBody.add(headrest);
+    });
+
+    const steeringWheel = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.02, 8, 16), chromeMat);
+    steeringWheel.position.set(-0.30, 0.88, -0.52);
+    steeringWheel.rotation.x = -0.35;
+    carBody.add(steeringWheel);
+
+    // Side Mirrors with Chrome Reflective Glass
+    [-0.88, 0.88].forEach(x => {
+      const mirrorArm = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.08), carbonMat);
+      mirrorArm.position.set(x > 0 ? x + 0.06 : x - 0.06, 0.82, -0.66);
+      carBody.add(mirrorArm);
+
+      const mirrorHousing = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.10, 0.12), bodyPaintMat);
+      mirrorHousing.position.set(x > 0 ? x + 0.16 : x - 0.16, 0.82, -0.66);
+      carBody.add(mirrorHousing);
+
+      const mirrorFace = new THREE.Mesh(new THREE.PlaneGeometry(0.14, 0.08), chromeMat);
+      mirrorFace.position.set(x > 0 ? x + 0.15 : x - 0.15, 0.82, -0.60);
+      mirrorFace.rotation.y = x > 0 ? -Math.PI / 12 : Math.PI / 12;
+      carBody.add(mirrorFace);
+    });
+
+    // 5. Rear Fascia & Aerodynamic Ducktail Spoiler
+    const ducktail = new THREE.Mesh(new THREE.BoxGeometry(1.64, 0.10, 0.34), carbonMat);
+    ducktail.position.set(0, 0.84, 1.86);
+    ducktail.rotation.x = 0.14;
+    ducktail.castShadow = true;
+    carBody.add(ducktail);
+
+    const rearBumper = new THREE.Mesh(new THREE.BoxGeometry(1.72, 0.38, 0.36), bodyPaintMat);
+    rearBumper.position.set(0, 0.42, 1.88);
+    rearBumper.castShadow = true;
+    carBody.add(rearBumper);
+
+    // Titanium Dual Exhaust Tips
+    [-0.56, -0.42, 0.42, 0.56].forEach(x => {
+      const exhaust = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.22, 16), chromeMat);
+      exhaust.rotation.x = Math.PI / 2;
+      exhaust.position.set(x, 0.26, 2.06);
+      carBody.add(exhaust);
+    });
+
+    // 6. Modern Lighting Assemblies
+    headlights = [];
+    spotLights = [];
+
+    [-0.62, 0.62].forEach(hx => {
+      // Crystal Lens Enclosure
+      const lens = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.12, 0.14), crystalLensMat);
+      lens.position.set(hx, 0.54, -1.88);
+      lens.rotation.y = hx > 0 ? -0.12 : 0.12;
+      carBody.add(lens);
+
+      // Dual Projector Halo Rings per headlight
+      [-0.08, 0.08].forEach(dx => {
+        const projector = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 12), drlLightMat);
+        projector.position.set(hx + dx, 0.54, -1.92);
+        carBody.add(projector);
+      });
+
+      // Focused Real Spotlight Casting on Ground
+      const spot = new THREE.SpotLight(0xffffff, 2.2, 36, Math.PI / 5, 0.35, 1.2);
+      spot.position.set(hx, 0.54, -1.90);
+      spot.target.position.set(hx, 0, -20);
+      carGroup.add(spot);
+      carGroup.add(spot.target);
+      headlights.push(spot);
+      spotLights.push(spot);
+    });
+
+    // Full-Width Seamless Rear LED Light Bar
+    const taillightBar = new THREE.Mesh(new THREE.BoxGeometry(1.58, 0.07, 0.05), taillightMat);
+    taillightBar.position.set(0, 0.62, 1.95);
+    carBody.add(taillightBar);
+
+    const chmsl = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.025, 0.04), taillightMat);
+    chmsl.position.set(0, 1.10, 0.68);
+    carBody.add(chmsl);
+
+    // 7. Four High-Precision Wheel & Tyre Assemblies
+    // Exact ground contact: Center y = 0.38, Radius = 0.38 -> lowest contact y = 0.000!
     const wheelPositions = [
-      { x: -0.95, y: 0.35, z: -1.0, isFront: true },  // Front Left
-      { x: 0.95, y: 0.35, z: -1.0, isFront: true },   // Front Right
-      { x: -0.95, y: 0.35, z: 1.0, isFront: false },  // Rear Left
-      { x: 0.95, y: 0.35, z: 1.0, isFront: false }    // Rear Right
+      { x: -0.95, y: 0.38, z: -1.22, isFront: true },  // Front Left
+      { x:  0.95, y: 0.38, z: -1.22, isFront: true },  // Front Right
+      { x: -0.95, y: 0.38, z:  1.22, isFront: false }, // Rear Left
+      { x:  0.95, y: 0.38, z:  1.22, isFront: false }  // Rear Right
     ];
 
     wheels = [];
     wheelPositions.forEach(pos => {
+      // Steer mount: rotates on Y only (handles front wheel steering)
       const wheelMount = new THREE.Group();
       wheelMount.position.set(pos.x, pos.y, pos.z);
+      carGroup.add(wheelMount);
 
-      const tire = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.28, 12), wheelMat);
+      // Performance Brake Caliper (Stationary relative to wheel spin)
+      const caliper = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.15, 0.07), brakeCaliperMat);
+      caliper.position.set(pos.x > 0 ? -0.06 : 0.06, 0.12, 0.10);
+      wheelMount.add(caliper);
+
+      // Axle Group: Rotates on X axis ONLY for forward/backward spin
+      const axle = new THREE.Group();
+      wheelMount.add(axle);
+
+      // Precision Treaded Rubber Tire
+      const tire = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.38, 0.38, 0.24, 28),
+        tireRubberMat
+      );
       tire.rotation.z = Math.PI / 2;
       tire.castShadow = true;
-      wheelMount.add(tire);
+      axle.add(tire);
 
-      const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.3, 8), rimMat);
-      rim.rotation.z = Math.PI / 2;
-      wheelMount.add(rim);
+      // Deep-Dish Rim Lip & Barrel
+      const rimBarrel = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.24, 0.24, 0.25, 24),
+        rimAlloyMat
+      );
+      rimBarrel.rotation.z = Math.PI / 2;
+      axle.add(rimBarrel);
 
-      carGroup.add(wheelMount);
+      // 5-Split-Spoke Forged Alloy Face
+      for (let i = 0; i < 5; i++) {
+        const spoke = new THREE.Mesh(
+          new THREE.BoxGeometry(0.04, 0.22, 0.255),
+          rimAlloyMat
+        );
+        spoke.rotation.x = (i * Math.PI * 2) / 5;
+        axle.add(spoke);
+      }
+
+      // Chrome Center Hub Cap
+      const hubCap = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.07, 0.07, 0.26, 16),
+        chromeMat
+      );
+      hubCap.rotation.z = Math.PI / 2;
+      axle.add(hubCap);
+
+      // Ventilated Cross-Drilled Brake Rotor
+      const rotor = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25, 0.25, 0.02, 20),
+        brakeRotorMat
+      );
+      rotor.rotation.z = Math.PI / 2;
+      rotor.position.x = pos.x > 0 ? -0.05 : 0.05;
+      axle.add(rotor);
+
       wheels.push({
         mount: wheelMount,
-        mesh: tire,
+        axle: axle,
         isFront: pos.isFront
       });
     });
 
-    // 5. Headlights & Light Cones
-    headlights = [];
-    [-0.55, 0.55].forEach(hx => {
-      // Glow bulb
-      const bulb = new THREE.Mesh(
-        new THREE.SphereGeometry(0.12, 8, 8),
-        new THREE.MeshBasicMaterial({ color: 0xffffff })
-      );
-      bulb.position.set(hx, 0.55, -1.6);
-      carGroup.add(bulb);
-
-      // Real Spotlight
-      const spot = new THREE.SpotLight(0xffffff, 0, 24, Math.PI / 6, 0.35);
-      spot.position.set(hx, 0.55, -1.6);
-      spot.target.position.set(hx, 0, -12);
-      carGroup.add(spot);
-      carGroup.add(spot.target);
-      headlights.push(spot);
-    });
-
-    // 6. Rear Taillights
-    [-0.55, 0.55].forEach(rx => {
-      const tail = new THREE.Mesh(
-        new THREE.BoxGeometry(0.25, 0.12, 0.05),
-        new THREE.MeshBasicMaterial({ color: 0xef4444 })
-      );
-      tail.position.set(rx, 0.55, 1.6);
-      carGroup.add(tail);
-    });
-
-    carGroup.position.copy(car.pos);
+    carGroup.position.set(car.pos.x, 0, car.pos.z);
+    carGroup.rotation.y = car.rot;
     scene.add(carGroup);
   }
 
@@ -1345,78 +1701,117 @@
   let prevTime = performance.now();
 
   function updatePhysics(dt) {
-    if (state.isWarping) return;
+    // If modal is open or car is navigating automatically, lock motion to prevent sliding
+    if (state.isAutoDriving || state.isWarping || state.activeModal) {
+      car.speed = 0;
+      car.steerAngle = 0;
+      car.pitch = 0;
+      car.roll = 0;
+      return;
+    }
 
-    // Acceleration & Braking inputs
     const isAcc = input.forward;
     const isRev = input.backward;
-    const isBrake = input.handbrake;
+    const isHandbrake = input.handbrake;
 
+    // Acceleration & Braking with Realistic Response Curves
     if (isAcc) {
+      car.isBraking = false;
       car.speed += car.accel * dt;
       if (car.speed > car.maxSpeed) car.speed = car.maxSpeed;
     } else if (isRev) {
-      car.speed -= car.brake * 0.6 * dt;
-      if (car.speed < car.maxReverse) car.speed = car.maxReverse;
+      if (car.speed > 0.5) {
+        // Active firm braking
+        car.isBraking = true;
+        car.speed = Math.max(0, car.speed - car.brake * dt);
+      } else {
+        // Reverse gear
+        car.isBraking = false;
+        car.speed -= car.accel * 0.7 * dt;
+        if (car.speed < car.maxReverse) car.speed = car.maxReverse;
+      }
     } else {
-      // Natural rolling friction deceleration
-      if (car.speed > 0) {
-        car.speed = Math.max(0, car.speed - car.decel * dt);
-      } else if (car.speed < 0) {
-        car.speed = Math.min(0, car.speed + car.decel * dt);
+      car.isBraking = false;
+      // Natural aerodynamic drag & rolling friction
+      car.speed *= Math.pow(0.92, dt * 60);
+      // Clean deadband: snap to exact zero to prevent infinite micro-sliding
+      if (Math.abs(car.speed) < 0.06) {
+        car.speed = 0;
       }
     }
 
-    if (isBrake) {
-      if (car.speed > 0) car.speed = Math.max(0, car.speed - car.brake * dt);
-      else if (car.speed < 0) car.speed = Math.min(0, car.speed + car.brake * dt);
+    // Handbrake
+    if (isHandbrake) {
+      car.isBraking = true;
+      if (car.speed > 0) car.speed = Math.max(0, car.speed - car.brake * 1.2 * dt);
+      else if (car.speed < 0) car.speed = Math.min(0, car.speed + car.brake * 1.2 * dt);
       car.drift = 1.0;
     } else {
-      car.drift = Math.max(0, car.drift - dt * 2);
+      car.drift = Math.max(0, car.drift - dt * 2.5);
     }
 
-    // Steering physics with speed scaling
-    const speedRatio = Math.min(1.0, Math.abs(car.speed) / (car.maxSpeed * 0.4));
+    // Steering Physics (Speed-scaled sensitivity for high-speed stability)
+    const speedRatio = Math.min(1.0, Math.abs(car.speed) / (car.maxSpeed * 0.35));
     let targetSteer = 0;
     if (input.left) targetSteer += car.maxSteer;
     if (input.right) targetSteer -= car.maxSteer;
 
-    car.steerAngle += (targetSteer - car.steerAngle) * Math.min(1, car.steerSpeed * dt * 3);
+    car.steerAngle += (targetSteer - car.steerAngle) * Math.min(1, car.steerSpeed * dt * 3.5);
 
-    // Car rotation (heading)
+    // Car Rotation (Heading)
     const direction = car.speed >= 0 ? 1 : -1;
-    if (Math.abs(car.speed) > 0.1) {
-      car.rot += car.steerAngle * speedRatio * direction * dt * 2.2;
+    if (Math.abs(car.speed) > 0.05) {
+      car.rot += car.steerAngle * speedRatio * direction * dt * 2.3;
     }
 
-    // Velocity update
+    // Velocity Position Updates
     car.pos.x -= Math.sin(car.rot) * car.speed * dt;
     car.pos.z -= Math.cos(car.rot) * car.speed * dt;
+    car.pos.y = 0; // Ground locked
 
-    // Boundaries bounce check (keep inside 52 units radius)
+    // Soft Boundary Deceleration (Keeps inside 50 units island)
     const distFromCenter = Math.sqrt(car.pos.x * car.pos.x + car.pos.z * car.pos.z);
-    if (distFromCenter > 52) {
+    if (distFromCenter > 50) {
       const normalX = car.pos.x / distFromCenter;
       const normalZ = car.pos.z / distFromCenter;
-      car.pos.x = normalX * 51.5;
-      car.pos.z = normalZ * 51.5;
-      car.speed = -car.speed * 0.4; // Soft bounce
+      car.pos.x = normalX * 49.8;
+      car.pos.z = normalZ * 49.8;
+      car.speed *= 0.3; // Gentle slowing rather than harsh violent bounce
     }
 
-    // Suspension tilting (Pitch & Roll)
-    car.pitch = THREE.MathUtils.lerp(car.pitch, (isAcc ? 0.05 : (isBrake || isRev ? -0.06 : 0)), 0.1);
-    car.roll = THREE.MathUtils.lerp(car.roll, car.steerAngle * (car.speed / car.maxSpeed) * 0.12, 0.1);
+    // Suspension Dynamics: Pitch (accel squat / brake dive) & Roll (cornering lean)
+    const targetPitch = isAcc ? 0.045 : (car.isBraking || (isRev && car.speed > 0) ? -0.06 : 0);
+    const targetRoll = car.steerAngle * (car.speed / car.maxSpeed) * 0.10;
+    car.pitch = THREE.MathUtils.lerp(car.pitch, targetPitch, 0.12);
+    car.roll = THREE.MathUtils.lerp(car.roll, targetRoll, 0.12);
+
+    // Dynamic Taillight Glow during Braking
+    if (taillightMat) {
+      const isTaillightActive = car.isBraking || (isRev && car.speed > 0.1);
+      taillightMat.emissiveIntensity = THREE.MathUtils.lerp(
+        taillightMat.emissiveIntensity,
+        isTaillightActive ? 3.6 : 1.8,
+        0.2
+      );
+    }
 
     // Update Three.js Car Transforms
-    carGroup.position.copy(car.pos);
+    carGroup.position.set(car.pos.x, 0, car.pos.z);
     carGroup.rotation.y = car.rot;
     carBody.rotation.x = car.pitch;
     carBody.rotation.z = car.roll;
 
-    // Rotate Wheels and Turn Front Wheels
-    const wheelRotSpeed = (car.speed / 0.35) * dt;
+    // Wheel Spin: ONLY rotates when the car is actually moving!
+    const isMoving = Math.abs(car.speed) > 0.04;
+    if (isMoving) {
+      const dAngle = (car.speed / 0.38) * dt;
+      wheels.forEach(w => {
+        w.axle.rotation.x += dAngle;
+      });
+    }
+
+    // Front Wheels Steering: Rotates on Y axis only
     wheels.forEach(w => {
-      w.mount.rotation.x += wheelRotSpeed;
       if (w.isFront) {
         w.mount.rotation.y = car.steerAngle;
       }
@@ -1428,7 +1823,7 @@
     // Update Speedometer HUD
     updateSpeedometer();
 
-    // Check Proximity to 6 Landmarks
+    // Check Proximity to Landmarks
     checkDestinationProximity();
   }
 
@@ -1482,7 +1877,17 @@
   }
 
   function updateCamera() {
-    if (state.isWarping) return;
+    if (state.isAutoDriving || state.isWarping) return;
+
+    if (camControl.mode === 'entrance') {
+      // Subtle cinematic breathing drift before user enters
+      const time = performance.now() * 0.0006;
+      const camX = 4.8 + Math.sin(time) * 0.35;
+      const camZ = 5.8 + Math.cos(time) * 0.35;
+      camera.position.set(camX, 2.2, camZ);
+      camera.lookAt(0, 0.7, 0);
+      return;
+    }
 
     // Follow car smoothly from behind
     const idealOffset = new THREE.Vector3(
@@ -1527,67 +1932,302 @@
   }
 
   /* ==========================================================================
-     9. CAMERA WARPING & DESTINATION NAVIGATION
+     9. CINEMATIC DESTINATION NAVIGATION & STOPPING SYSTEM
      ========================================================================== */
 
-  function warpToDestination(destId) {
-    const dest = DESTINATIONS[destId];
-    if (!dest) return;
+  // Precision Parking Spots & Cinematic Camera Framing for Each Landmark
+  const LANDMARK_PARKING = {
+    about: {
+      pos: new THREE.Vector3(-22, 0, -14),
+      rot: 1.05, // Facing toward About dome (-32, 0, -20)
+      camPos: new THREE.Vector3(-13, 5.0, -8),
+      camLookAt: new THREE.Vector3(-28, 2.0, -18)
+    },
+    education: {
+      pos: new THREE.Vector3(-22, 0, 18),
+      rot: 2.11, // Facing toward Education campus (-32, 0, 24)
+      camPos: new THREE.Vector3(-13, 5.0, 11),
+      camLookAt: new THREE.Vector3(-28, 2.0, 22)
+    },
+    achievements: {
+      pos: new THREE.Vector3(0, 0, -24),
+      rot: 0,    // Facing North directly at the Golden Trophy (0, 0, -36)
+      camPos: new THREE.Vector3(4.5, 4.6, -14),
+      camLookAt: new THREE.Vector3(0, 2.4, -32)
+    },
+    projects: {
+      pos: new THREE.Vector3(22, 0, -14),
+      rot: -1.11, // Facing toward Projects pavilion (34, 0, -20)
+      camPos: new THREE.Vector3(13, 5.0, -8),
+      camLookAt: new THREE.Vector3(28, 2.0, -18)
+    },
+    prs: {
+      pos: new THREE.Vector3(22, 0, 18),
+      rot: -2.11, // Facing toward 10 PRs server array (34, 0, 24)
+      camPos: new THREE.Vector3(13, 5.0, 11),
+      camLookAt: new THREE.Vector3(28, 2.0, 22)
+    },
+    skills: {
+      pos: new THREE.Vector3(0, 0, 16),
+      rot: Math.PI, // Facing South directly at Skills pillars (0, 0, 26)
+      camPos: new THREE.Vector3(-4.5, 4.6, 7),
+      camLookAt: new THREE.Vector3(0, 2.0, 23)
+    },
+    contact: {
+      pos: new THREE.Vector3(0, 0, 0),
+      rot: 0,    // Facing North on Central Launch Pad
+      camPos: new THREE.Vector3(4.8, 3.6, 7.5),
+      camLookAt: new THREE.Vector3(0, 0.8, 0)
+    }
+  };
 
+  let activeDriveAnimation = null;
+
+  function driveToDestination(destId) {
+    const dest = DESTINATIONS[destId];
+    const parking = LANDMARK_PARKING[destId] || {
+      pos: new THREE.Vector3(dest.pos.x - 4, 0, dest.pos.z + 4),
+      rot: 0,
+      camPos: new THREE.Vector3(dest.pos.x, 9, dest.pos.z + 14),
+      camLookAt: new THREE.Vector3(dest.pos.x, 2, dest.pos.z)
+    };
+
+    if (activeDriveAnimation) {
+      cancelAnimationFrame(activeDriveAnimation);
+      activeDriveAnimation = null;
+    }
+
+    state.isAutoDriving = true;
     state.isWarping = true;
     audio.playChime();
 
-    // Smoothly transition car position near destination
-    const targetCarPos = new THREE.Vector3(
-      dest.pos.x - 4,
-      0.4,
-      dest.pos.z + 4
-    );
+    // Starting State
+    const P0 = new THREE.Vector3(car.pos.x, 0, car.pos.z);
+    const rot0 = car.rot;
+    const P3 = new THREE.Vector3(parking.pos.x, 0, parking.pos.z);
+    const rot3 = parking.rot;
 
-    // Reset speeds
-    car.speed = 0;
-    car.steerAngle = 0;
-    car.rot = Math.atan2(dest.pos.x - targetCarPos.x, dest.pos.z - targetCarPos.z);
+    const dist = P0.distanceTo(P3);
 
-    const startPos = new THREE.Vector3().copy(car.pos);
+    // If already at destination, lock completely and open modal
+    if (dist < 1.0) {
+      car.pos.copy(P3);
+      car.rot = rot3;
+      car.speed = 0;
+      car.steerAngle = 0;
+      car.pitch = 0;
+      car.roll = 0;
+      carGroup.position.set(car.pos.x, 0, car.pos.z);
+      carGroup.rotation.y = car.rot;
+      state.isAutoDriving = false;
+      state.isWarping = false;
+      updateSpeedometer();
+      openModal(destId);
+      return;
+    }
+
+    // Control Points for Smooth Kinematic Spline Curve
+    const forwardVec0 = new THREE.Vector3(-Math.sin(rot0), 0, -Math.cos(rot0));
+    const forwardVec3 = new THREE.Vector3(-Math.sin(rot3), 0, -Math.cos(rot3));
+    const leadDist = Math.min(dist * 0.45, 12);
+
+    const P1 = new THREE.Vector3().copy(P0).addScaledVector(forwardVec0, leadDist);
+    const P2 = new THREE.Vector3().copy(P3).addScaledVector(forwardVec3, -leadDist);
+
     const startCamPos = new THREE.Vector3().copy(camera.position);
-    const targetCamPos = new THREE.Vector3(dest.pos.x, 9, dest.pos.z + 14);
+    const targetCamPos = parking.camPos;
+    const targetCamLook = parking.camLookAt;
 
-    let progress = 0;
-    const warpDuration = 1000; // ms
-    const startTime = performance.now();
+    // Natural 2.2s to 3.0s duration so car drive feels intentional & cinematic
+    const durationMs = Math.max(2200, Math.min(3000, dist * 75));
+    let startTime = null;
+    let prevFrameTime = null;
+    let prevCarPos = new THREE.Vector3().copy(P0);
 
-    function stepWarp(currentTime) {
+    function cubicBezier(p0, p1, p2, p3, t) {
+      const u = 1 - t;
+      const tt = t * t;
+      const uu = u * u;
+      const uuu = uu * u;
+      const ttt = tt * t;
+      const res = new THREE.Vector3();
+      res.addScaledVector(p0, uuu);
+      res.addScaledVector(p1, 3 * uu * t);
+      res.addScaledVector(p2, 3 * u * tt);
+      res.addScaledVector(p3, ttt);
+      return res;
+    }
+
+    function stepDrive(currentTime) {
+      if (!startTime) {
+        startTime = currentTime;
+        prevFrameTime = currentTime;
+      }
+
       const elapsed = currentTime - startTime;
-      progress = Math.min(1.0, elapsed / warpDuration);
-      // Ease in-out cubic
-      const ease = progress < 0.5 ? 4 * progress * progress * progress : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+      const rawProgress = Math.min(1.0, elapsed / durationMs);
 
-      car.pos.lerpVectors(startPos, targetCarPos, ease);
-      carGroup.position.copy(car.pos);
+      // Quintic Smoothstep Easing (Zero velocity & zero acceleration at endpoints)
+      // s(u) = 10u^3 - 15u^4 + 6u^5
+      const ease = 10 * Math.pow(rawProgress, 3) - 15 * Math.pow(rawProgress, 4) + 6 * Math.pow(rawProgress, 5);
 
-      camera.position.lerpVectors(startCamPos, targetCamPos, ease);
-      camera.lookAt(dest.pos.x, 2, dest.pos.z);
+      const currentPos = cubicBezier(P0, P1, P2, P3, ease);
+      const nextSampleT = Math.min(1.0, ease + 0.015);
+      const aheadPos = cubicBezier(P0, P1, P2, P3, nextSampleT);
 
-      if (progress < 1.0) {
-        requestAnimationFrame(stepWarp);
+      // Instantaneous heading from curve tangent
+      const dx = aheadPos.x - currentPos.x;
+      const dz = aheadPos.z - currentPos.z;
+      const tangentDist = Math.sqrt(dx * dx + dz * dz);
+
+      let targetRot = rot3;
+      if (tangentDist > 0.001 && rawProgress < 0.92) {
+        targetRot = Math.atan2(-dx, -dz);
+      }
+
+      // Smooth heading transition into final parking orientation
+      if (rawProgress >= 0.92) {
+        const blend = (rawProgress - 0.92) / 0.08;
+        car.rot = THREE.MathUtils.lerp(car.rot, rot3, blend);
       } else {
+        car.rot = targetRot;
+      }
+
+      // Steer Angle (Front wheels steer naturally into curve)
+      const steerDelta = THREE.MathUtils.clamp((targetRot - car.rot) * 2.5, -0.62, 0.62);
+      car.steerAngle = rawProgress < 0.85 ? steerDelta : 0;
+
+      // Distance traveled this frame for wheel spin & velocity
+      const frameDt = Math.max(0.001, (currentTime - prevFrameTime) / 1000);
+      prevFrameTime = currentTime;
+
+      const stepDist = currentPos.distanceTo(prevCarPos);
+      prevCarPos.copy(currentPos);
+
+      // Live Speed calculation for Speedometer & Engine Audio
+      car.speed = (stepDist / frameDt);
+      updateSpeedometer();
+      audio.updateEngine(car.speed, rawProgress < 0.55);
+
+      // Wheel Spin proportional to motion
+      if (stepDist > 0.001) {
+        const dAngle = stepDist / 0.38;
+        wheels.forEach(w => {
+          w.axle.rotation.x += dAngle;
+        });
+      }
+
+      // Front Wheels Steering
+      wheels.forEach(w => {
+        if (w.isFront) {
+          w.mount.rotation.y = car.steerAngle;
+        }
+      });
+
+      // Realistic Braking Deceleration & Taillights
+      if (rawProgress > 0.70) {
+        const brakePhase = (rawProgress - 0.70) / 0.30;
+        car.pitch = -0.045 * (1 - brakePhase); // Smooth nose dip into parking
+        if (taillightMat) taillightMat.emissiveIntensity = 3.4; // Bright brake light
+      } else if (rawProgress < 0.22) {
+        const accelPhase = rawProgress / 0.22;
+        car.pitch = 0.035 * accelPhase; // Slight squat
+      } else {
+        car.pitch = 0;
+      }
+
+      // Update Car Transforms
+      car.pos.copy(currentPos);
+      carGroup.position.set(car.pos.x, 0, car.pos.z);
+      carGroup.rotation.y = car.rot;
+      carBody.rotation.x = car.pitch;
+
+      // Smooth Camera Glide Framing the Scene
+      // Chase the car during travel, then smoothly settle into landmark hero framing
+      const chaseCamPos = new THREE.Vector3(
+        currentPos.x + Math.sin(car.rot) * 13.5,
+        camControl.height,
+        currentPos.z + Math.cos(car.rot) * 13.5
+      );
+      const settleBlend = rawProgress < 0.65 ? 0 : (rawProgress - 0.65) / 0.35;
+      const desiredCamPos = new THREE.Vector3().lerpVectors(chaseCamPos, targetCamPos, settleBlend);
+      camera.position.lerp(desiredCamPos, 0.14);
+
+      const lookCar = new THREE.Vector3(currentPos.x, currentPos.y + 1.2, currentPos.z);
+      const curLook = new THREE.Vector3().lerpVectors(lookCar, targetCamLook, settleBlend);
+      camera.lookAt(curLook);
+
+      if (rawProgress < 1.0) {
+        activeDriveAnimation = requestAnimationFrame(stepDrive);
+      } else {
+        // EXACT STOPPING MECHANISM: All velocities zeroed, car locked stationary
+        activeDriveAnimation = null;
+        car.pos.copy(P3);
+        car.rot = rot3;
+        car.speed = 0.0;
+        car.steerAngle = 0.0;
+        car.pitch = 0.0;
+        car.roll = 0.0;
+        car.drift = 0.0;
+        car.isBraking = false;
+
+        carGroup.position.set(car.pos.x, 0, car.pos.z);
+        carGroup.rotation.y = car.rot;
+        carBody.rotation.x = 0;
+        carBody.rotation.z = 0;
+
+        // Reset wheel steering and freeze rotation
+        wheels.forEach(w => {
+          if (w.isFront) w.mount.rotation.y = 0;
+        });
+
+        if (taillightMat) taillightMat.emissiveIntensity = 1.8;
+
+        updateSpeedometer(); // Displays 0 KM/H N
+        audio.updateEngine(0, false);
+
+        state.isAutoDriving = false;
         state.isWarping = false;
-        // Open modal presentation for that section
-        openModal(dest.id);
+        camControl.mode = 'parking';
+
+        // Brief cinematic pause at zero stop before modal opens
+        setTimeout(() => {
+          if (state.activeModal === null && camControl.mode === 'parking') {
+            openModal(destId);
+          }
+        }, 350);
       }
     }
 
-    requestAnimationFrame(stepWarp);
+    activeDriveAnimation = requestAnimationFrame(stepDrive);
   }
 
+  // Alias warpToDestination to driveToDestination for full compatibility
+  const warpToDestination = driveToDestination;
+
   function resetCar() {
-    car.pos.set(0, 0.4, 0);
+    if (activeDriveAnimation) {
+      cancelAnimationFrame(activeDriveAnimation);
+      activeDriveAnimation = null;
+    }
+    car.pos.set(0, 0, 0);
     car.rot = 0;
     car.speed = 0;
     car.steerAngle = 0;
-    carGroup.position.copy(car.pos);
+    car.pitch = 0;
+    car.roll = 0;
+    carGroup.position.set(0, 0, 0);
     carGroup.rotation.y = 0;
+    carBody.rotation.x = 0;
+    carBody.rotation.z = 0;
+    wheels.forEach(w => {
+      if (w.isFront) w.mount.rotation.y = 0;
+    });
+    updateSpeedometer();
+    audio.updateEngine(0, false);
+    state.isAutoDriving = false;
+    state.isWarping = false;
+    camControl.mode = 'follow';
     audio.playChime();
   }
 
@@ -1816,6 +2456,7 @@
     state.activeModal = null;
     const overlay = document.getElementById('modal-overlay');
     if (overlay) overlay.classList.remove('active');
+    camControl.mode = 'follow';
   }
 
   function switchProjectTab(tabKey) {
@@ -2316,35 +2957,81 @@
      14. LOADING SCREEN LIFECYCLE
      ========================================================================== */
 
+  /* ==========================================================================
+     14. ENTRANCE LIFECYCLE & CINEMATIC TRANSITION
+     ========================================================================== */
+
   function finishLoading() {
-    const progressBar = document.getElementById('loader-progress-bar');
-    const statusText = document.getElementById('loader-status-text');
     const startBtn = document.getElementById('btn-enter-world');
     const loaderScreen = document.getElementById('loader-screen');
+    const hudOverlay = document.getElementById('hud-overlay');
 
-    let p = 0;
-    const interval = setInterval(() => {
-      p += 20;
-      if (progressBar) progressBar.style.width = p + '%';
+    // Immediately start render loop so user sees 3D world behind frosted card
+    requestAnimationFrame(animate);
 
-      if (p === 40 && statusText) statusText.textContent = "Constructing Low-Poly Landmarks...";
-      if (p === 80 && statusText) statusText.textContent = "Calibrating Vehicle Physics & Controls...";
+    function enterExperience() {
+      if (state.hasEntered) return;
+      state.hasEntered = true;
 
-      if (p >= 100) {
-        clearInterval(interval);
-        if (statusText) statusText.textContent = "Ready to explore!";
-        if (startBtn) {
-          startBtn.style.display = 'inline-block';
-          startBtn.addEventListener('click', () => {
-            if (loaderScreen) loaderScreen.classList.add('fade-out');
-            audio.toggle(); // Auto-start audio if allowed by user gesture
-          });
+      // 1. Smoothly fade out entrance screen
+      if (loaderScreen) {
+        loaderScreen.classList.add('fade-out');
+      }
+
+      // 2. Smoothly reveal HUD
+      if (hudOverlay) {
+        hudOverlay.classList.add('active');
+      }
+
+      // 3. Audio toggle on user gesture
+      audio.toggle();
+
+      // 4. Smooth Cinematic Camera Swoop from Hero Entrance to Follow Driver View
+      camControl.mode = 'transition';
+      const startCamPos = new THREE.Vector3().copy(camera.position); // (4.8, 2.2, 5.8)
+      const targetCamPos = new THREE.Vector3(
+        car.pos.x + Math.sin(car.rot + camControl.yaw) * camControl.distance,
+        camControl.height,
+        car.pos.z + Math.cos(car.rot + camControl.yaw) * camControl.distance
+      );
+
+      const startLook = new THREE.Vector3(0, 0.7, 0);
+      const targetLook = new THREE.Vector3(car.pos.x, car.pos.y + 1.2, car.pos.z);
+
+      const transitionDuration = 1200; // ms
+      const startTime = performance.now();
+
+      function stepEnterCam(time) {
+        const elapsed = time - startTime;
+        const p = Math.min(1.0, elapsed / transitionDuration);
+        // Cubic ease out
+        const ease = 1 - Math.pow(1 - p, 3);
+
+        camera.position.lerpVectors(startCamPos, targetCamPos, ease);
+        const curLook = new THREE.Vector3().lerpVectors(startLook, targetLook, ease);
+        camera.lookAt(curLook);
+
+        if (p < 1.0) {
+          requestAnimationFrame(stepEnterCam);
+        } else {
+          camControl.mode = 'follow';
         }
       }
-    }, 120);
 
-    // Start render loop
-    requestAnimationFrame(animate);
+      requestAnimationFrame(stepEnterCam);
+    }
+
+    if (startBtn) {
+      startBtn.addEventListener('click', enterExperience);
+    }
+
+    // Also allow pressing ENTER or SPACE to enter immediately
+    window.addEventListener('keydown', (e) => {
+      if (!state.hasEntered && (e.key === 'Enter' || e.code === 'Space')) {
+        e.preventDefault();
+        enterExperience();
+      }
+    });
   }
 
   // Self-boot on DOMContentLoaded
