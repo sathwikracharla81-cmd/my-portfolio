@@ -379,11 +379,12 @@
   let taillightMat, drlLightMat, spotLights = [];
   let animatedObjects = [];
   let minimapCanvas, minimapCtx;
+  let entranceGate = null;
 
   // Car Physics State
   const car = {
-    pos: new THREE.Vector3(0, 0, 0),
-    rot: 0, // Facing North toward achievements plaza
+    pos: new THREE.Vector3(0, 0, 36),
+    rot: 0, // Facing North toward entrance portal and central plaza
     speed: 0,
     maxSpeed: 28,
     maxReverse: -10,
@@ -427,9 +428,9 @@
     scene.fog = new THREE.FogExp2(0xa0d8ef, 0.012);
 
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.2, 500);
-    // Initial cinematic hero framing for entrance screen
-    camera.position.set(4.8, 2.2, 5.8);
-    camera.lookAt(0, 0.7, 0);
+    // Initial cinematic hero framing tracking behind car along entrance road
+    camera.position.set(3.2, 2.4, 40.5);
+    camera.lookAt(0, 1.2, 25);
 
     try {
       renderer = new THREE.WebGLRenderer({
@@ -549,6 +550,9 @@
     // 2. Road Network (Interconnected Loop & Plazas)
     buildRoadNetwork();
 
+    // 2b. Grand Architectural Entrance Portal Building & Blast Gates
+    buildEntrancePortal();
+
     // 3. Low-Poly Vegetation (Pine trees, leafy trees, rocks)
     buildVegetation();
 
@@ -630,7 +634,7 @@
       { x: 0, z: -18, rotY: 0, len: 28 },             // Toward Achievements
       { x: 18, z: -10, rotY: -Math.PI / 4, len: 32 }, // Toward Projects
       { x: 18, z: 12, rotY: Math.PI / 4, len: 32 },   // Toward 10 PRs
-      { x: 0, z: 18, rotY: 0, len: 28 }               // Toward Skills / Contact
+      { x: 0, z: 19, rotY: 0, len: 38 }               // South Entrance Avenue & Toward Skills
     ];
 
     roadSpecs.forEach(spec => {
@@ -662,6 +666,194 @@
     ringRoad.position.y = 0.04;
     ringRoad.receiveShadow = true;
     scene.add(ringRoad);
+  }
+
+  /* ==========================================================================
+     2b. GRAND ARCHITECTURAL ENTRANCE BUILDING & BLAST GATES
+     ========================================================================== */
+
+  function buildEntrancePortal() {
+    const group = new THREE.Group();
+    group.position.set(0, 0, 14);
+
+    const pillarMat = new THREE.MeshStandardMaterial({
+      color: 0x1e293b,
+      metalness: 0.8,
+      roughness: 0.25,
+      flatShading: true
+    });
+
+    const trimMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0x0284c7,
+      emissiveIntensity: 1.8
+    });
+
+    const doorMat = new THREE.MeshStandardMaterial({
+      color: 0x0f172a,
+      metalness: 0.65,
+      roughness: 0.35,
+      flatShading: true
+    });
+
+    const neonAccentMat = new THREE.MeshStandardMaterial({
+      color: 0x38bdf8,
+      emissive: 0x38bdf8,
+      emissiveIntensity: 2.4
+    });
+
+    // Left Architectural Monolith Pylon (x = -4.2)
+    const leftPylon = new THREE.Mesh(new THREE.BoxGeometry(2.4, 6.2, 2.8), pillarMat);
+    leftPylon.position.set(-4.2, 3.1, 0);
+    leftPylon.castShadow = true;
+    leftPylon.receiveShadow = true;
+    group.add(leftPylon);
+
+    const leftTrim = new THREE.Mesh(new THREE.BoxGeometry(0.12, 6.2, 0.12), trimMat);
+    leftTrim.position.set(-2.95, 3.1, 1.35);
+    group.add(leftTrim);
+
+    // Right Architectural Monolith Pylon (x = +4.2)
+    const rightPylon = new THREE.Mesh(new THREE.BoxGeometry(2.4, 6.2, 2.8), pillarMat);
+    rightPylon.position.set(4.2, 3.1, 0);
+    rightPylon.castShadow = true;
+    rightPylon.receiveShadow = true;
+    group.add(rightPylon);
+
+    const rightTrim = new THREE.Mesh(new THREE.BoxGeometry(0.12, 6.2, 0.12), trimMat);
+    rightTrim.position.set(2.95, 3.1, 1.35);
+    group.add(rightTrim);
+
+    // Overhead Portal Archway Lintel Beam
+    const archBeam = new THREE.Mesh(new THREE.BoxGeometry(10.8, 1.4, 3.2), pillarMat);
+    archBeam.position.set(0, 6.8, 0);
+    archBeam.castShadow = true;
+    group.add(archBeam);
+
+    const archCrown = new THREE.Mesh(new THREE.BoxGeometry(10.6, 0.15, 3.25), neonAccentMat);
+    archCrown.position.set(0, 7.55, 0);
+    group.add(archCrown);
+
+    // Illuminated Floating Portal Sign
+    const gateSign = createFloatingSign("SATHWIK RACHARLA", 0x38bdf8);
+    gateSign.position.set(0, 6.8, 1.7);
+    gateSign.scale.set(0.85, 0.85, 0.85);
+    group.add(gateSign);
+
+    // Sliding Motorized Blast Doors (Initial State: CLOSED at z = 14)
+    const doorGeo = new THREE.BoxGeometry(2.9, 4.8, 0.35);
+
+    const leftDoor = new THREE.Mesh(doorGeo, doorMat);
+    leftDoor.position.set(-1.45, 2.4, 0);
+    leftDoor.castShadow = true;
+    group.add(leftDoor);
+
+    const leftDoorStripe = new THREE.Mesh(new THREE.BoxGeometry(0.08, 4.4, 0.38), neonAccentMat);
+    leftDoorStripe.position.set(1.2, 0, 0);
+    leftDoor.add(leftDoorStripe);
+
+    const rightDoor = new THREE.Mesh(doorGeo, doorMat);
+    rightDoor.position.set(1.45, 2.4, 0);
+    rightDoor.castShadow = true;
+    group.add(rightDoor);
+
+    const rightDoorStripe = new THREE.Mesh(new THREE.BoxGeometry(0.08, 4.4, 0.38), neonAccentMat);
+    rightDoorStripe.position.set(-1.2, 0, 0);
+    rightDoor.add(rightDoorStripe);
+
+    // Illuminated Vehicle Stopping Line on Road at z = 19.5 (5.5m outside the gate)
+    const stopLine = new THREE.Mesh(
+      new THREE.BoxGeometry(5.2, 0.05, 0.4),
+      new THREE.MeshStandardMaterial({
+        color: 0x38bdf8,
+        emissive: 0x0ea5e9,
+        emissiveIntensity: 2.8
+      })
+    );
+    stopLine.position.set(0, 0.04, 5.5);
+    group.add(stopLine);
+
+    scene.add(group);
+
+    entranceGate = {
+      group: group,
+      leftDoor: leftDoor,
+      rightDoor: rightDoor,
+      isOpen: false,
+      openAmount: 0 // 0 = fully closed, 1 = fully open
+    };
+
+    return entranceGate;
+  }
+
+  /* ==========================================================================
+     PHYSICAL COLLISION SYSTEM (BUILDINGS, LANDMARKS, OBSTACLES)
+     ========================================================================== */
+
+  const COLLISION_OBSTACLES = [
+    // Landmark 1: About Observatory (Base radius 6.2)
+    { id: 'about', x: -32, z: -20, radius: 6.8 },
+    // Landmark 2: Education Campus (Base width 9, depth 8)
+    { id: 'education', x: -32, z: 24, radius: 6.8 },
+    // Landmark 3: Achievements Trophy (Podium radius 6.5)
+    { id: 'achievements', x: 0, z: -36, radius: 7.2 },
+    // Landmark 4: Projects AMENDMENT Arena (Board 8x8)
+    { id: 'projects', x: 34, z: -20, radius: 6.8 },
+    // Landmark 5: 10 PRs Hub (Git Tree platform radius 6)
+    { id: 'prs', x: 34, z: 12, radius: 6.8 },
+    // Landmark 6: Skills Forge (Anvil base radius 5)
+    { id: 'skills', x: -6, z: 36, radius: 5.8 },
+    // Landmark 7: Contact Lighthouse (Tower base radius 2.8)
+    { id: 'contact', x: 24, z: 36, radius: 3.8 },
+    // Central Launch Pad Decorative Light Pylons
+    { id: 'pylon_left', x: -8.5, z: 0, radius: 0.9 },
+    { id: 'pylon_right', x: 8.5, z: 0, radius: 0.9 },
+    // Entrance Gate Architectural Towers
+    { id: 'gate_tower_left', x: -4.2, z: 14, radius: 2.2 },
+    { id: 'gate_tower_right', x: 4.2, z: 14, radius: 2.2 }
+  ];
+
+  function resolveCollisions() {
+    const carRadius = 1.35; // Bounding collision radius of sports car
+
+    // 1. Entrance Gate Blast Doors Barrier at z = 14
+    if (entranceGate && entranceGate.openAmount < 0.85) {
+      if (Math.abs(car.pos.x) < 3.2 && Math.abs(car.pos.z - 14) < (carRadius + 0.6)) {
+        if (car.pos.z >= 14) {
+          car.pos.z = 14 + (carRadius + 0.6);
+        } else {
+          car.pos.z = 14 - (carRadius + 0.6);
+        }
+        if (car.speed > 0) car.speed = 0;
+      }
+    }
+
+    // 2. All Architectural Buildings and Landmark Structures
+    for (let i = 0; i < COLLISION_OBSTACLES.length; i++) {
+      const obs = COLLISION_OBSTACLES[i];
+      const dx = car.pos.x - obs.x;
+      const dz = car.pos.z - obs.z;
+      const distSq = dx * dx + dz * dz;
+      const minDist = obs.radius + carRadius;
+
+      if (distSq < minDist * minDist && distSq > 0.0001) {
+        const dist = Math.sqrt(distSq);
+        const nx = dx / dist;
+        const nz = dz / dist;
+
+        // Firm physical constraint: snap car to exterior boundary (NEVER penetrates)
+        car.pos.x = obs.x + nx * minDist;
+        car.pos.z = obs.z + nz * minDist;
+
+        // Damped velocity response
+        const velX = -Math.sin(car.rot) * car.speed;
+        const velZ = -Math.cos(car.rot) * car.speed;
+        const normalVel = velX * nx + velZ * nz;
+        if (normalVel < 0) {
+          car.speed *= 0.2;
+        }
+      }
+    }
   }
 
   function buildVegetation() {
@@ -1769,6 +1961,9 @@
     car.pos.z -= Math.cos(car.rot) * car.speed * dt;
     car.pos.y = 0; // Ground locked
 
+    // Solid Building and Architectural Obstacle Collisions (Car never enters buildings)
+    resolveCollisions();
+
     // Soft Boundary Deceleration (Keeps inside 50 units island)
     const distFromCenter = Math.sqrt(car.pos.x * car.pos.x + car.pos.z * car.pos.z);
     if (distFromCenter > 50) {
@@ -1801,12 +1996,12 @@
     carBody.rotation.x = car.pitch;
     carBody.rotation.z = car.roll;
 
-    // Wheel Spin: ONLY rotates when the car is actually moving!
+    // Wheel Spin: ONLY rotates when the car is actually moving, in correct rolling direction!
     const isMoving = Math.abs(car.speed) > 0.04;
     if (isMoving) {
       const dAngle = (car.speed / 0.38) * dt;
       wheels.forEach(w => {
-        w.axle.rotation.x += dAngle;
+        w.axle.rotation.x -= dAngle;
       });
     }
 
@@ -1968,20 +2163,25 @@
       camLookAt: new THREE.Vector3(28, 2.0, 22)
     },
     skills: {
-      pos: new THREE.Vector3(0, 0, 16),
-      rot: Math.PI, // Facing South directly at Skills pillars (0, 0, 26)
-      camPos: new THREE.Vector3(-4.5, 4.6, 7),
-      camLookAt: new THREE.Vector3(0, 2.0, 23)
+      pos: new THREE.Vector3(0, 0, 24),
+      rot: Math.PI, // Facing South directly at Skills pillars (0, 0, 36)
+      camPos: new THREE.Vector3(-4.5, 4.6, 15),
+      camLookAt: new THREE.Vector3(0, 2.0, 32)
     },
     contact: {
-      pos: new THREE.Vector3(0, 0, 0),
-      rot: 0,    // Facing North on Central Launch Pad
-      camPos: new THREE.Vector3(4.8, 3.6, 7.5),
-      camLookAt: new THREE.Vector3(0, 0.8, 0)
+      pos: new THREE.Vector3(16, 0, 28),
+      rot: -0.78, // Facing toward Contact Lighthouse (24, 0, 36)
+      camPos: new THREE.Vector3(8, 5.0, 20),
+      camLookAt: new THREE.Vector3(22, 2.5, 34)
     }
   };
 
   let activeDriveAnimation = null;
+
+  function lerpAngle(a, b, t) {
+    const diff = Math.atan2(Math.sin(b - a), Math.cos(b - a));
+    return a + diff * t;
+  }
 
   function driveToDestination(destId) {
     const dest = DESTINATIONS[destId];
@@ -2081,21 +2281,21 @@
       const tangentDist = Math.sqrt(dx * dx + dz * dz);
 
       let targetRot = rot3;
-      if (tangentDist > 0.001 && rawProgress < 0.92) {
+      if (tangentDist > 0.001 && rawProgress < 0.90) {
         targetRot = Math.atan2(-dx, -dz);
       }
 
-      // Smooth heading transition into final parking orientation
-      if (rawProgress >= 0.92) {
-        const blend = (rawProgress - 0.92) / 0.08;
-        car.rot = THREE.MathUtils.lerp(car.rot, rot3, blend);
+      // Smooth heading transition into final parking orientation using shortest-arc lerpAngle
+      if (rawProgress >= 0.90) {
+        const blend = (rawProgress - 0.90) / 0.10;
+        car.rot = lerpAngle(car.rot, rot3, blend);
       } else {
-        car.rot = targetRot;
+        car.rot = lerpAngle(car.rot, targetRot, 0.35);
       }
 
-      // Steer Angle (Front wheels steer naturally into curve)
-      const steerDelta = THREE.MathUtils.clamp((targetRot - car.rot) * 2.5, -0.62, 0.62);
-      car.steerAngle = rawProgress < 0.85 ? steerDelta : 0;
+      // Steer Angle (Front wheels steer naturally into curve without twitching)
+      const steerDiff = Math.atan2(Math.sin(targetRot - car.rot), Math.cos(targetRot - car.rot));
+      car.steerAngle = rawProgress < 0.85 ? THREE.MathUtils.clamp(steerDiff * 1.5, -car.maxSteer, car.maxSteer) : 0;
 
       // Distance traveled this frame for wheel spin & velocity
       const frameDt = Math.max(0.001, (currentTime - prevFrameTime) / 1000);
@@ -2109,11 +2309,11 @@
       updateSpeedometer();
       audio.updateEngine(car.speed, rawProgress < 0.55);
 
-      // Wheel Spin proportional to motion
+      // Wheel Spin proportional to motion in correct rolling direction!
       if (stepDist > 0.001) {
         const dAngle = stepDist / 0.38;
         wheels.forEach(w => {
-          w.axle.rotation.x += dAngle;
+          w.axle.rotation.x -= dAngle;
         });
       }
 
@@ -2488,15 +2688,29 @@
     switch (sectionId) {
       case "about":
         return `
-          <p class="content-lead">
-            Hello, I'm Sathwik Racharla. I grew up in Vemulawada, a heritage town in Telangana, India. My background is rooted in consistent effort, intellectual curiosity, and building software that solves concrete problems.
-          </p>
-          <p class="content-paragraph">
-            I studied at a local government school until Class 10, graduating with a <strong>9.7 CGPA</strong>. That environment taught me resourcefulness, hard work, and the importance of understanding fundamentals without taking shortcuts. In Class 12, I secured <strong>978 out of 1000</strong> marks and scored an <strong>85.978 percentile</strong> in the JEE entrance examination.
-          </p>
-          <p class="content-paragraph">
-            Today, I am studying Computer Science and Engineering (CSE) at <strong>Newton School of Technology</strong>. I am deeply interested in backend systems, deterministic state machines, software architecture, and open-source software. I value genuine code, honest self-evaluation, and rigorous testing above empty buzzwords.
-          </p>
+          <div class="about-hero-profile">
+            <div class="profile-photo-card">
+              <div class="photo-frame">
+                <img src="assets/images/profile-photo.jpg" alt="Sathwik Racharla" class="profile-img" onerror="this.onerror=null; this.src='assets/images/hackathon-winner.jpg';" />
+                <div class="photo-badge"><span>✓</span> Verified</div>
+              </div>
+              <div class="photo-meta">
+                <div class="photo-name">Sathwik Racharla</div>
+                <div class="photo-tagline">Newton School of Technology · Backend Architect</div>
+              </div>
+            </div>
+            <div class="profile-header-text">
+              <p class="content-lead">
+                Hello, I'm Sathwik Racharla. I grew up in Vemulawada, a heritage town in Telangana, India. My background is rooted in consistent effort, intellectual curiosity, and building software that solves concrete problems.
+              </p>
+              <p class="content-paragraph">
+                I studied at a local government school until Class 10, graduating with a <strong>9.7 CGPA</strong>. That environment taught me resourcefulness, hard work, and the importance of understanding fundamentals without taking shortcuts. In Class 12, I secured <strong>978 out of 1000</strong> marks and scored an <strong>85.978 percentile</strong> in the JEE entrance examination.
+              </p>
+              <p class="content-paragraph">
+                Today, I am studying Computer Science and Engineering (CSE) at <strong>Newton School of Technology</strong>. I am deeply interested in backend systems, deterministic state machines, software architecture, and open-source software.
+              </p>
+            </div>
+          </div>
           <div class="stats-grid">
             <div class="stat-box">
               <div class="stat-number">9.7</div>
@@ -2958,7 +3172,7 @@
      ========================================================================== */
 
   /* ==========================================================================
-     14. ENTRANCE LIFECYCLE & CINEMATIC TRANSITION
+     14. ENTRANCE LIFECYCLE & AUTOMATIC SYNCHRONIZED OPENING
      ========================================================================== */
 
   function finishLoading() {
@@ -2966,66 +3180,242 @@
     const loaderScreen = document.getElementById('loader-screen');
     const hudOverlay = document.getElementById('hud-overlay');
 
-    // Immediately start render loop so user sees 3D world behind frosted card
+    // Immediately start render loop
     requestAnimationFrame(animate);
+
+    // Initial vehicle state on south entrance road
+    car.pos.set(0, 0, 36);
+    car.rot = 0;
+    car.speed = 0;
+    car.pitch = 0;
+    car.roll = 0;
+    car.steerAngle = 0;
+    carGroup.position.set(0, 0, 36);
+    carGroup.rotation.y = 0;
+    camControl.mode = 'entrance';
+    state.isAutoDriving = true;
+
+    // Phase 1: Approach the Entrance Building
+    let entrancePhase = 'approach'; // 'approach' | 'stopped_outside' | 'opening' | 'roll_in' | 'done'
+    const approachDuration = 2200; // ms
+    let approachStartTime = null;
+
+    function runEntranceApproach(currentTime) {
+      if (state.hasEntered) return;
+      if (!approachStartTime) approachStartTime = currentTime;
+
+      const elapsed = currentTime - approachStartTime;
+      const p = Math.min(1.0, elapsed / approachDuration);
+
+      // Quintic smoothstep easing (Zero velocity at endpoints)
+      const ease = 10 * Math.pow(p, 3) - 15 * Math.pow(p, 4) + 6 * Math.pow(p, 5);
+
+      // Smooth straight movement from z = 36 down to designated stop at z = 19.5 (5.5m outside gate at z = 14)
+      const currentZ = 36 - ease * (36 - 19.5);
+      const prevZ = car.pos.z;
+
+      car.pos.set(0, 0, currentZ);
+      car.rot = 0;
+      carGroup.position.set(0, 0, currentZ);
+      carGroup.rotation.y = 0;
+
+      // Realistic speed and forward wheel roll
+      const stepDist = prevZ - currentZ;
+      car.speed = Math.max(0, stepDist / 0.016);
+      updateSpeedometer();
+
+      if (stepDist > 0.0001) {
+        const dAngle = stepDist / 0.38;
+        wheels.forEach(w => {
+          w.axle.rotation.x -= dAngle;
+          if (w.isFront) w.mount.rotation.y = 0;
+        });
+      }
+
+      // Suspension brake dip during final 30% of approach
+      if (p > 0.70) {
+        const brakeP = (p - 0.70) / 0.30;
+        car.pitch = -0.045 * (1 - brakeP);
+        if (taillightMat) taillightMat.emissiveIntensity = 3.6;
+      } else if (p < 0.20) {
+        car.pitch = 0.035 * (p / 0.20);
+      } else {
+        car.pitch = 0;
+      }
+      carBody.rotation.x = car.pitch;
+
+      // Dynamic cinematic camera tracking behind the car
+      camera.position.set(
+        2.6 + Math.sin(p * 2) * 0.3,
+        2.2 + ease * 0.4,
+        currentZ + 4.8
+      );
+      camera.lookAt(0, 1.2, currentZ - 5);
+
+      if (p < 1.0) {
+        requestAnimationFrame(runEntranceApproach);
+      } else {
+        // ========================================================
+        // STEP 1 COMPLETE: CAR STOPS AT DESIGNATED POSITION OUTSIDE
+        // Front bumper is 3.6m outside the closed building doors!
+        // ========================================================
+        entrancePhase = 'stopped_outside';
+        car.speed = 0;
+        car.pitch = 0;
+        carBody.rotation.x = 0;
+        wheels.forEach(w => {
+          if (w.isFront) w.mount.rotation.y = 0;
+        });
+        updateSpeedometer();
+        audio.updateEngine(0, false);
+        if (taillightMat) taillightMat.emissiveIntensity = 3.8;
+
+        // ========================================================
+        // STEP 2: AUTOMATIC ENTRANCE OPENING ANIMATION
+        // Triggers automatically while car is outside!
+        // ========================================================
+        audio.playChime();
+        let doorStartTime = null;
+        const doorDuration = 1200; // ms
+
+        function animateDoorOpening(doorTime) {
+          if (state.hasEntered) return;
+          if (!doorStartTime) doorStartTime = doorTime;
+
+          const doorElapsed = doorTime - doorStartTime;
+          const dp = Math.min(1.0, doorElapsed / doorDuration);
+          const doorEase = 1 - Math.pow(1 - dp, 3); // Cubic ease out
+
+          if (entranceGate) {
+            entranceGate.openAmount = doorEase;
+            entranceGate.leftDoor.position.x = -1.45 - doorEase * 2.8;
+            entranceGate.rightDoor.position.x = 1.45 + doorEase * 2.8;
+          }
+
+          // Camera frames the opening portal
+          camera.position.set(2.8, 2.5, 23.5);
+          camera.lookAt(0, 2.6, 14);
+
+          if (dp < 1.0) {
+            requestAnimationFrame(animateDoorOpening);
+          } else {
+            // ========================================================
+            // STEP 3: AUTOMATIC TRANSITION INTO PORTFOLIO WORLD
+            // Seamless fade out overlay and glide into central plaza
+            // ========================================================
+            if (loaderScreen) loaderScreen.classList.add('fade-out');
+            if (hudOverlay) hudOverlay.classList.add('active');
+
+            entrancePhase = 'roll_in';
+            let rollStartTime = null;
+            const rollDuration = 1600; // ms
+
+            function animateRollIn(rollTime) {
+              if (state.hasEntered) return;
+              if (!rollStartTime) rollStartTime = rollTime;
+
+              const rollElapsed = rollTime - rollStartTime;
+              const rp = Math.min(1.0, rollElapsed / rollDuration);
+              const rollEase = 10 * Math.pow(rp, 3) - 15 * Math.pow(rp, 4) + 6 * Math.pow(rp, 5);
+
+              const zPos = 19.5 - rollEase * 19.5;
+              const prevRollZ = car.pos.z;
+              car.pos.set(0, 0, zPos);
+              carGroup.position.set(0, 0, zPos);
+
+              const rollStep = prevRollZ - zPos;
+              car.speed = Math.max(0, rollStep / 0.016);
+              updateSpeedometer();
+
+              if (rollStep > 0.0001) {
+                const dAngle = rollStep / 0.38;
+                wheels.forEach(w => w.axle.rotation.x -= dAngle);
+              }
+
+              // Smooth camera transition into standard follow view
+              const targetCamY = camControl.height;
+              const targetCamZ = zPos + camControl.distance;
+              camera.position.set(
+                Math.sin(rollEase * Math.PI) * 1.2,
+                THREE.MathUtils.lerp(2.5, targetCamY, rollEase),
+                THREE.MathUtils.lerp(23.5, targetCamZ, rollEase)
+              );
+              camera.lookAt(0, 1.2, zPos);
+
+              if (rp < 1.0) {
+                requestAnimationFrame(animateRollIn);
+              } else {
+                // ARRIVED AT CENTRAL PLAZA LAUNCH PAD (0, 0, 0)
+                car.pos.set(0, 0, 0);
+                car.rot = 0;
+                car.speed = 0;
+                car.pitch = 0;
+                car.roll = 0;
+                carGroup.position.set(0, 0, 0);
+                carGroup.rotation.y = 0;
+                wheels.forEach(w => {
+                  if (w.isFront) w.mount.rotation.y = 0;
+                });
+                if (taillightMat) taillightMat.emissiveIntensity = 1.8;
+                updateSpeedometer();
+                audio.updateEngine(0, false);
+
+                state.isAutoDriving = false;
+                state.hasEntered = true;
+                camControl.mode = 'follow';
+              }
+            }
+
+            requestAnimationFrame(animateRollIn);
+          }
+        }
+
+        requestAnimationFrame(animateDoorOpening);
+      }
+    }
+
+    // Begin automatic entrance approach immediately
+    requestAnimationFrame(runEntranceApproach);
 
     function enterExperience() {
       if (state.hasEntered) return;
       state.hasEntered = true;
+      state.isAutoDriving = false;
 
-      // 1. Smoothly fade out entrance screen
-      if (loaderScreen) {
-        loaderScreen.classList.add('fade-out');
+      // Ensure blast doors are fully open
+      if (entranceGate) {
+        entranceGate.openAmount = 1.0;
+        entranceGate.leftDoor.position.x = -4.3;
+        entranceGate.rightDoor.position.x = 4.3;
       }
 
-      // 2. Smoothly reveal HUD
-      if (hudOverlay) {
-        hudOverlay.classList.add('active');
-      }
+      if (loaderScreen) loaderScreen.classList.add('fade-out');
+      if (hudOverlay) hudOverlay.classList.add('active');
 
-      // 3. Audio toggle on user gesture
       audio.toggle();
 
-      // 4. Smooth Cinematic Camera Swoop from Hero Entrance to Follow Driver View
-      camControl.mode = 'transition';
-      const startCamPos = new THREE.Vector3().copy(camera.position); // (4.8, 2.2, 5.8)
-      const targetCamPos = new THREE.Vector3(
-        car.pos.x + Math.sin(car.rot + camControl.yaw) * camControl.distance,
-        camControl.height,
-        car.pos.z + Math.cos(car.rot + camControl.yaw) * camControl.distance
-      );
+      // Settle car cleanly on Central Launch Pad
+      car.pos.set(0, 0, 0);
+      car.rot = 0;
+      car.speed = 0;
+      car.pitch = 0;
+      car.roll = 0;
+      carGroup.position.set(0, 0, 0);
+      carGroup.rotation.y = 0;
+      wheels.forEach(w => {
+        if (w.isFront) w.mount.rotation.y = 0;
+      });
 
-      const startLook = new THREE.Vector3(0, 0.7, 0);
-      const targetLook = new THREE.Vector3(car.pos.x, car.pos.y + 1.2, car.pos.z);
-
-      const transitionDuration = 1200; // ms
-      const startTime = performance.now();
-
-      function stepEnterCam(time) {
-        const elapsed = time - startTime;
-        const p = Math.min(1.0, elapsed / transitionDuration);
-        // Cubic ease out
-        const ease = 1 - Math.pow(1 - p, 3);
-
-        camera.position.lerpVectors(startCamPos, targetCamPos, ease);
-        const curLook = new THREE.Vector3().lerpVectors(startLook, targetLook, ease);
-        camera.lookAt(curLook);
-
-        if (p < 1.0) {
-          requestAnimationFrame(stepEnterCam);
-        } else {
-          camControl.mode = 'follow';
-        }
-      }
-
-      requestAnimationFrame(stepEnterCam);
+      camControl.mode = 'follow';
+      camera.position.set(0, camControl.height, camControl.distance);
+      camera.lookAt(0, 1.2, 0);
     }
 
     if (startBtn) {
       startBtn.addEventListener('click', enterExperience);
     }
 
-    // Also allow pressing ENTER or SPACE to enter immediately
+    // User can also press Enter or Space to fast-forward into the world
     window.addEventListener('keydown', (e) => {
       if (!state.hasEntered && (e.key === 'Enter' || e.code === 'Space')) {
         e.preventDefault();
